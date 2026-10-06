@@ -114,8 +114,6 @@
   .today { padding:24px; }
   .today .th { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
   .today .hint { font-weight:700; letter-spacing:.04em; font-size:12px; }
-  .tmr { display:flex; align-items:center; gap:8px; background:var(--s2); padding:6px 8px 6px 16px; border-radius:99px; }
-  .timer { font-size:22px; font-weight:800; letter-spacing:-.03em; }
   .chat { display:flex; flex-direction:column; gap:10px; }
   .msg { display:flex; gap:10px; align-items:flex-start; }
   .av { width:30px; height:30px; flex:none; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--sky)); }
@@ -219,7 +217,6 @@
   .s.cur { box-shadow:0 14px 26px -14px rgba(15,44,54,.6); }
 
   /* hoy */
-  .tmr { border-radius:12px; padding:5px 6px 5px 14px; }
   .av { width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,var(--teal),var(--sky)); }
   .bub { border-radius:6px 16px 16px 16px; }
   .steps li { border-radius:14px; }
@@ -314,7 +311,7 @@ const store = {
 };
 let dayDone = store.get("vp_days", {});
 let stepDone = store.get("vp_steps", {});
-let selDay = null, timer = { run:false, left:0, id:null };
+let selDay = null;
 
 // Datos introducidos en el propio panel (se guardan en este navegador) + los de data.js
 ["listings","activity","ratings"].forEach(k => {
@@ -382,7 +379,7 @@ function renderHero() {
       <div class="eyebrow">${day ? esc(ph ? ph.name : "Plan completado") : "Calentamiento de cuenta"}</div>
       <div class="big">${day ?? "–"}<small>/${plan.length}</small></div>
       <div class="bt">${p ? esc(p.title) : "Pulsa «He creado la cuenta» para empezar"}</div>
-      <div class="chips2">${p ? `<span class="chip2">${p.min} min hoy</span>` : ""}<span class="chip2">${done} días hechos</span>${week ? `<span class="chip2">Semana ${week}</span>` : ""}</div>
+      <div class="chips2"><span class="chip2">${done} días hechos</span>${week ? `<span class="chip2">Semana ${week}</span>` : ""}</div>
       <div class="bar"><i style="width:${done/plan.length*100}%"></i></div></div>
     <div class="br">${ring(T.score)}<div class="st"><b>Índice de confianza</b><span class="badge ${T.ready ? "ok" : ""}">${T.ready ? "Listo para 1 par de Samba" : "Aún no subas las Samba"}</span></div></div></div>`;
 }
@@ -406,7 +403,7 @@ function renderKpis() {
 const greeting = () => { const h = new Date().getHours(); return h < 6 ? "Hola." : h < 13 ? "Buenos días." : h < 21 ? "Buenas tardes." : "Buenas noches."; };
 function todayText(cur) {
   const p = D.plan[cur-1], sd = stepDone[cur] || [];
-  return `DÍA ${cur} DE ${D.plan.length} · ${p.title} (${p.min} min)\n\n` +
+  return `DÍA ${cur} DE ${D.plan.length} · ${p.title}\n\n` +
     p.steps.map((s,i) => `${sd[i] ? "[x]" : "[ ]"} ${s}`).join("\n") + `\n\nNo hagas: ${p.dont}`;
 }
 function renderToday() {
@@ -422,18 +419,17 @@ function renderToday() {
     const p = plan[cur-1], sd = stepDone[cur] || [];
     const missed = plan.filter(x => x.d < cur && !dayDone[x.d]).map(x => x.d);
     const ndone = p.steps.filter((_,i)=>sd[i]).length;
-    html += `<div class="card hero today"><div class="th"><div><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
-        <h2 style="font-size:19px;margin:2px 0 0">${esc(p.title)}</h2></div>
-        <div class="tmr"><span class="timer" id="tm">${fmt(timer.left||p.min*60)}</span><button class="btn ghost sm" id="tgl">${timer.run?"Pausar":"Iniciar"}</button></div></div>
+    html += `<div class="card hero today"><div class="th"><div><div class="hint">DÍA ${cur} DE ${plan.length}</div>
+        <h2 style="font-size:19px;margin:2px 0 0">${esc(p.title)}</h2></div></div>
       <div class="bar" style="margin:12px 0 12px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
       <div class="chat">
-        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. La tarea lleva unos <b>${p.min} minutos</b> (es lo que cuesta hacerla, no un tiempo mínimo en la app).<br><span class="suma">Hoy suma a tu índice: ${esc(p.suma || "uso regular")}</span>
+        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>.<br><span class="suma">Hoy suma a tu índice: ${esc(p.suma || "uso regular")}</span>
           <div class="hint" style="margin-top:8px">${cur >= 9 ? "Ya con anuncios: haz la tarea en una sola sesión, mejor por la tarde-noche, y echa un vistazo de 1-2 minutos a las notificaciones una o dos veces más durante el día para responder pronto." : "Una sola sesión al día es suficiente. No hace falta entrar más veces ni dar likes para aparentar actividad."}</div></div></div>
         ${missed.length ? `<div class="msg"><div class="av"></div><div class="bub warn"> Te quedan ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}). No pasa nada: haz lo de hoy y sigue a tu ritmo.</div></div>` : ""}
         <div class="msg"><div class="av"></div><div class="bub">Esto es lo que toca hoy (${ndone}/${p.steps.length}):
           <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul></div></div>
         <div class="msg"><div class="av"></div><div class="bub warn"> ${esc(p.dont)}</div></div>
-        ${dayDone[cur] ? `<div class="msg"><div class="av"></div><div class="bub ok"> Día completado. ${plan[cur] ? "Mañana: <b>"+esc(plan[cur].title)+"</b> ("+plan[cur].min+" min)." : "¡Has terminado el plan!"}</div></div>`
+        ${dayDone[cur] ? `<div class="msg"><div class="av"></div><div class="bub ok"> Día completado. ${plan[cur] ? "Mañana: <b>"+esc(plan[cur].title)+"</b>." : "¡Has terminado el plan!"}</div></div>`
           : `<div class="msg"><div class="av"></div><div class="bub">Cuando termines, pulsa <b>Marcar día completado</b> y se registra solo. Tu índice ahora: <b>${(T.score/20).toFixed(1)}/5</b>. ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div></div>`}
       </div>
       <div class="row" style="margin-top:12px;gap:8px">
@@ -457,28 +453,15 @@ function renderToday() {
     // el registro de actividad del día se crea (o se quita) solo al completar (o desmarcar) el día
     const fecha = todayIso(), p = D.plan[cur-1];
     D.activity = D.activity.filter(x => !(x._loc && x.fecha === fecha));
-    if (dayDone[cur]) addItem("activity", { fecha, minutos:p.min, subidos:/^Subir el artículo/.test(p.title) ? 1 : 0, ventas:0,
+    if (dayDone[cur]) addItem("activity", { fecha, subidos:/^Subir el artículo/.test(p.title) ? 1 : 0, ventas:0,
       compras:/compra/i.test(p.title) ? 1 : 0, valoraciones:0, avisos:0, notas:"Día "+cur+" · "+p.title });
     else saveLoc("activity");
     render(); };
-  const tg = $("tgl"); if (tg) tg.onclick = toggleTimer;
   const cp = $("cpy"); if (cp) cp.onclick = async () => {
     const txt = todayText(cur);
     try { await navigator.clipboard.writeText(txt); cp.textContent = "✔ Copiado"; }
     catch(e) { prompt("Copia el texto:", txt); }
     setTimeout(() => { if ($("cpy")) $("cpy").textContent = " Copiar en texto"; }, 1600); };
-}
-const fmt = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
-function toggleTimer() {
-  const cur = (daysSince(startDate()) ?? 0) + 1, p = D.plan[cur-1]; if (!p) return;
-  if (timer.run) { clearInterval(timer.id); timer.run = false; }
-  else {
-    if (!timer.left) timer.left = p.min * 60;
-    timer.run = true;
-    timer.id = setInterval(() => { timer.left--; const e = $("tm"); if (e) e.textContent = fmt(Math.max(0,timer.left));
-      if (timer.left <= 0) { clearInterval(timer.id); timer.run = false; timer.left = 0; renderToday(); } }, 1000);
-  }
-  const b = $("tgl"); if (b) b.textContent = timer.run ? "Pausar" : "Iniciar";
 }
 
 // ---- Plan ----
@@ -488,12 +471,12 @@ function renderPlan() {
     let c = "tile";
     if (dayDone[p.d]) c += " done"; else if (cur && p.d < cur) c += " miss";
     if (p.d === cur) c += " cur"; if (p.d === (selDay ?? cur)) c += " sel";
-    return `<div class="${c}" data-d="${p.d}" title="${esc(p.title)} · ${p.min} min"><b>${p.d}</b></div>`;
+    return `<div class="${c}" data-d="${p.d}" title="${esc(p.title)}"><b>${p.d}</b></div>`;
   }).join("");
   document.querySelectorAll(".tile").forEach(t => t.onclick = () => { const n = +t.dataset.d; selDay = (selDay === n) ? null : n; renderPlan(); });
   if (selDay != null && selDay !== cur) {
     const p = D.plan[selDay-1];
-    $("dayDetail").innerHTML = `<div class="dd"><div class="hint">DÍA ${selDay} · ${p.min} MIN</div><b>${esc(p.title)}</b>
+    $("dayDetail").innerHTML = `<div class="dd"><div class="hint">DÍA ${selDay}</div><b>${esc(p.title)}</b>
       <ol class="mini">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><div class="hint"> ${esc(p.dont)}</div></div>`;
   } else $("dayDetail").innerHTML = "";
 }
@@ -592,8 +575,8 @@ function renderTables() {
       return `<tr><td>${esc(x.fecha)}</td><td>${esc(x.articulo)}</td><td>${esc(x.modelo)}</td><td>${eur(x.coste)}</td><td>${eur(x.precio)}</td>
       <td>${est}${x.motivo?" · "+esc(x.motivo):""}</td><td>${esc(x.prueba)}</td><td>${eur(x.precioVenta)}</td><td>${m==null?"–":eur(m)}</td><td>${esc(x.notas)}</td><td>${x._loc?`<a href="#" onclick="delItem('listings',${i});return false" style="color:var(--bad)">✕</a>`:""}</td></tr>`; }).join("") + `</table>`
     : `<div class="empty">Aún no hay artículos. Añade el primero con el formulario de arriba.</div>`;
-  $("activity").innerHTML = D.activity.length ? `<table><tr><th>Fecha</th><th>Min</th><th>Subidos</th><th>Ventas</th><th>Compras</th><th>Valoraciones</th><th>Avisos</th><th>Notas</th></tr>` +
-    D.activity.slice().reverse().map(a=>`<tr><td>${esc(a.fecha)}</td><td>${esc(a.minutos)}</td><td>${esc(a.subidos)}</td><td>${esc(a.ventas)}</td><td>${esc(a.compras)}</td><td>${esc(a.valoraciones)}</td><td>${esc(a.avisos)}</td><td>${esc(a.notas)}</td></tr>`).join("") + `</table>`
+  $("activity").innerHTML = D.activity.length ? `<table><tr><th>Fecha</th><th>Subidos</th><th>Ventas</th><th>Compras</th><th>Valoraciones</th><th>Avisos</th><th>Notas</th></tr>` +
+    D.activity.slice().reverse().map(a=>`<tr><td>${esc(a.fecha)}</td><td>${esc(a.subidos)}</td><td>${esc(a.ventas)}</td><td>${esc(a.compras)}</td><td>${esc(a.valoraciones)}</td><td>${esc(a.avisos)}</td><td>${esc(a.notas)}</td></tr>`).join("") + `</table>`
     : `<div class="empty">Sin registros todavía.</div>`;
   $("ratings").innerHTML = D.ratings.length ? D.ratings.map(r => `<div class="rt"><span class="stars">${"★".repeat(r.estrellas)}${"☆".repeat(5-r.estrellas)}</span><span>${esc(r.comentario)}</span><span class="hint" style="margin-left:auto">${esc(r.fecha)}</span></div>`).join("") : `<div class="empty">Sin valoraciones todavía.</div>`;
 }
