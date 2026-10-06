@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel Vinted</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: dark;
@@ -119,6 +122,19 @@
   h2[style*="font-size"] { text-transform:none; letter-spacing:-.015em; color:var(--ink); font-weight:700; }
 
   /* ===== compacto ===== */
+  /* ===== tipografía ===== */
+  :root { --body:Inter,"Helvetica Neue",Helvetica,Arial,sans-serif; --head:"Space Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif; }
+  body, button, input, select { font-family:var(--body); }
+  body { font-size:14px; letter-spacing:-.005em; font-feature-settings:"cv11","ss01"; }
+  h1, h2, .rmh b, .kpi .v, .timer, .tile b, .nm, #nav button, .pill, .tr h2 { font-family:var(--head); }
+  h1 { font-size:18px; font-weight:700; letter-spacing:-.03em; }
+  h2 { font-weight:600; letter-spacing:.14em; }
+  .kpi .v { font-weight:700; letter-spacing:-.03em; }
+  .timer { font-weight:600; letter-spacing:-.04em; }
+  .today h2, h2[style*="font-size"] { font-family:var(--head); letter-spacing:-.03em; font-weight:700; }
+  .tile b, .nm { font-weight:600; }
+  svg text { font-family:var(--head); }
+
   .view { display:none; } .view.on { display:block; }
   .wrap { max-width:1240px; padding:0 18px; }
   .top { padding:12px 0 10px; gap:14px; flex-wrap:nowrap; }
