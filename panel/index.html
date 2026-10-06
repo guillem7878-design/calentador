@@ -199,6 +199,17 @@
   .dd { margin-top:12px; padding:12px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--line); font-size:13px; }
   .dd ol.mini { margin:6px 0 6px 16px; }
   th, td { padding:9px 8px; }
+
+  /* ===== chat ===== */
+  .chat { display:flex; flex-direction:column; gap:8px; }
+  .msg { display:flex; gap:9px; align-items:flex-start; }
+  .av { width:28px; height:28px; flex:none; border-radius:50%; display:grid; place-items:center; font-size:14px; }
+  .av:not(:empty) { background:linear-gradient(135deg,rgba(94,234,212,.25),rgba(139,123,255,.25)); border:1px solid var(--line); }
+  .bub { background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:4px 16px 16px 16px; padding:10px 14px; font-size:13.5px; line-height:1.55; max-width:100%; min-width:0; }
+  .bub.warn { background:var(--warnbg); border-color:rgba(251,191,36,.22); color:var(--warn); font-size:13px; }
+  .bub.ok { background:var(--accbg); border-color:rgba(94,234,212,.28); color:var(--acc); }
+  .bub .steps { margin:8px 0 0; } .bub .steps li { background:rgba(0,0,0,.18); }
+  .bub .steps li:last-child { margin-bottom:0; }
 </style>
 </head>
 <body>
@@ -338,8 +349,15 @@ function renderKpis() {
 }
 
 // ---- Hoy ----
+const greeting = () => { const h = new Date().getHours(); return h < 6 ? "Hola 🌙" : h < 13 ? "Buenos días ☀️" : h < 21 ? "Buenas tardes 👋" : "Buenas noches 🌙"; };
+function todayText(cur) {
+  const p = D.plan[cur-1], sd = stepDone[cur] || [];
+  return `DÍA ${cur} DE ${D.plan.length} · ${p.title} (${p.min} min)\n\n` +
+    p.steps.map((s,i) => `${sd[i] ? "[x]" : "[ ]"} ${s}`).join("\n") + `\n\nNo hagas: ${p.dont}`;
+}
 function renderToday() {
   const s = startDate(), age = daysSince(s), cur = age == null ? null : age + 1, plan = D.plan;
+  const T = trust();
   let html = "";
 
   if (cur == null) {
@@ -353,13 +371,20 @@ function renderToday() {
     html += `<div class="card hero today"><div class="th"><div><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
         <h2 style="font-size:19px;margin:2px 0 0">${esc(p.title)}</h2></div>
         <div class="tmr"><span class="timer" id="tm">${fmt(timer.left||p.min*60)}</span><button class="btn ghost sm" id="tgl">${timer.run?"⏸":"▶"}</button></div></div>
-      ${missed.length ? `<div class="mini-alert">⏳ ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}) · no pasa nada, haz lo de hoy</div>` : ""}
-      <div class="bar" style="margin:12px 0 10px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
-      <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul>
-      <div class="dont">✋ ${esc(p.dont)}</div>
-      <div class="row" style="margin-top:12px;gap:10px">
-        <button class="btn" id="fin">${dayDone[cur]?"✔ Día completado":"Marcar día completado"}</button>
-        <button class="btn ghost" id="toreg">📝 Registrar el día</button></div></div>`;
+      <div class="bar" style="margin:12px 0 12px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
+      <div class="chat">
+        <div class="msg"><div class="av">🤖</div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. Te llevará unos <b>${p.min} minutos</b>.</div></div>
+        ${missed.length ? `<div class="msg"><div class="av"></div><div class="bub warn">⏳ Te quedan ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}). No pasa nada: haz lo de hoy y sigue a tu ritmo.</div></div>` : ""}
+        <div class="msg"><div class="av"></div><div class="bub">Esto es lo que toca hoy (${ndone}/${p.steps.length}):
+          <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul></div></div>
+        <div class="msg"><div class="av"></div><div class="bub warn">✋ ${esc(p.dont)}</div></div>
+        ${dayDone[cur] ? `<div class="msg"><div class="av"></div><div class="bub ok">🎉 Día completado. ${plan[cur] ? "Mañana: <b>"+esc(plan[cur].title)+"</b> ("+plan[cur].min+" min)." : "¡Has terminado el plan!"}</div></div>`
+          : `<div class="msg"><div class="av"></div><div class="bub">Cuando termines, márcalo y cuéntame cómo ha ido en <b>Registro</b>. Tu índice ahora: <b>${(T.score/20).toFixed(1)}/5</b>. ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div></div>`}
+      </div>
+      <div class="row" style="margin-top:12px;gap:8px">
+        <button class="btn" id="fin">${dayDone[cur]?"✔ Día completado":"✅ Marcar día completado"}</button>
+        <button class="btn ghost" id="toreg">📝 Registrar el día</button>
+        <button class="btn ghost" id="cpy">📋 Copiar en texto</button></div></div>`;
   }
   if (cur != null) html += `<p class="hint" style="text-align:center">Alta: ${esc(s)} · <a href="#" id="rst" style="color:var(--mut)">cambiar fecha de alta</a></p>`;
   $("today").innerHTML = html;
@@ -376,6 +401,11 @@ function renderToday() {
   const f = $("fin"); if (f) f.onclick = () => { dayDone[cur] = !dayDone[cur]; store.set("vp_days", dayDone); render(); };
   const tg = $("tgl"); if (tg) tg.onclick = toggleTimer;
   const tr = $("toreg"); if (tr) tr.onclick = () => showTab("v-reg");
+  const cp = $("cpy"); if (cp) cp.onclick = async () => {
+    const txt = todayText(cur);
+    try { await navigator.clipboard.writeText(txt); cp.textContent = "✔ Copiado"; }
+    catch(e) { prompt("Copia el texto:", txt); }
+    setTimeout(() => { if ($("cpy")) $("cpy").textContent = "📋 Copiar en texto"; }, 1600); };
 }
 const fmt = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 function toggleTimer() {
