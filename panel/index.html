@@ -250,6 +250,13 @@
   .pin { animation:pb 1.3s ease-in-out infinite; }
   @keyframes pb { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
 
+  /* navegación que no se sale en móvil */
+  .top { row-gap:10px; }
+  #nav { max-width:100%; overflow-x:auto; scrollbar-width:none; }
+  #nav::-webkit-scrollbar { display:none; }
+  #nav button { white-space:nowrap; flex:none; }
+  @media (max-width:560px) { #nav { width:100%; justify-content:space-between; } #nav button { padding:8px 10px; font-size:12.5px; } }
+
   /* ===== incidencias ===== */
   #incChat { max-height:520px; overflow-y:auto; padding-right:4px; margin-bottom:14px; }
   .msg.me { flex-direction:row-reverse; }
