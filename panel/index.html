@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel Vinted</title>
+<style>
+  :root {
+    --bg:#f4f6f8; --card:#ffffff; --ink:#14181d; --mut:#667085; --line:#e4e7ec;
+    --acc:#0d9488; --acc2:#0f766e; --accbg:#e6f6f4; --warn:#d97706; --warnbg:#fff4e0; --bad:#dc2626; --badbg:#fde8e8;
+    --shadow:0 1px 2px rgba(16,24,40,.06), 0 4px 14px rgba(16,24,40,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0e1116; --card:#171b22; --ink:#e9ecf1; --mut:#9aa3b2; --line:#272d37;
+      --acc:#2dd4bf; --acc2:#5eead4; --accbg:#12302d; --warn:#fbbf24; --warnbg:#3a2c0f; --bad:#f87171; --badbg:#3a1a1a;
+      --shadow:0 1px 2px rgba(0,0,0,.4); }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,"Segoe UI",Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); border-bottom:1px solid var(--line); }
+  .wrap { max-width:960px; margin:0 auto; padding:0 16px; }
+  .top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0 8px; flex-wrap:wrap; }
+  h1 { font-size:20px; margin:0; letter-spacing:-.01em; }
+  .pill { background:var(--accbg); color:var(--acc2); padding:4px 12px; border-radius:99px; font-size:13px; font-weight:600; }
+  nav { display:flex; gap:4px; overflow-x:auto; padding-bottom:8px; }
+  nav button { border:0; background:transparent; color:var(--mut); font:inherit; font-weight:600; padding:8px 14px; border-radius:10px; cursor:pointer; white-space:nowrap; }
+  nav button.on { background:var(--card); color:var(--ink); box-shadow:var(--shadow); }
+  main { padding:18px 0 70px; }
+  section { display:none; } section.on { display:block; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:16px; box-shadow:var(--shadow); }
+  h2 { font-size:16px; margin:0 0 12px; }
+  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); margin-bottom:16px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:var(--shadow); }
+  .kpi .k { color:var(--mut); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:600; }
+  .kpi .v { font-size:24px; font-weight:700; margin-top:2px; }
+  .hint { color:var(--mut); font-size:13px; }
+  .row { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  button.btn { border:0; background:var(--acc); color:#04201d; font:inherit; font-weight:700; padding:10px 18px; border-radius:12px; cursor:pointer; }
+  button.btn.ghost { background:var(--accbg); color:var(--acc2); }
+  button.btn:disabled { opacity:.5; cursor:default; }
+  .bar { height:8px; background:var(--line); border-radius:99px; overflow:hidden; }
+  .bar i { display:block; height:100%; background:var(--acc); border-radius:99px; transition:width .3s; }
+  .steps { list-style:none; margin:10px 0; padding:0; }
+  .steps li { display:flex; gap:12px; align-items:flex-start; padding:10px 12px; border:1px solid var(--line); border-radius:12px; margin-bottom:8px; cursor:pointer; }
+  .steps li.done { background:var(--accbg); border-color:transparent; }
+  .steps li.done .tx { color:var(--mut); text-decoration:line-through; }
+  .chk { width:22px; height:22px; flex:none; border-radius:7px; border:2px solid var(--mut); display:grid; place-items:center; font-size:14px; color:transparent; margin-top:1px; }
+  .done .chk { background:var(--acc); border-color:var(--acc); color:#04201d; }
+  .dont { background:var(--warnbg); color:var(--warn); padding:8px 12px; border-radius:10px; font-size:14px; margin:8px 0; }
+  .timer { font-variant-numeric:tabular-nums; font-size:30px; font-weight:700; }
+  .cal { display:grid; grid-template-columns:repeat(auto-fill,minmax(52px,1fr)); gap:8px; }
+  .tile { border:1px solid var(--line); border-radius:12px; padding:8px 0; text-align:center; cursor:pointer; background:var(--card); }
+  .tile b { display:block; font-size:16px; } .tile span { font-size:11px; color:var(--mut); }
+  .tile.done { background:var(--accbg); border-color:transparent; } .tile.done b { color:var(--acc2); }
+  .tile.cur { outline:2px solid var(--acc); }
+  .tile.miss { background:var(--warnbg); border-color:transparent; }
+  .tile.sel { box-shadow:0 0 0 2px var(--ink) inset; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--mut); }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--mut); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .scroll { overflow-x:auto; }
+  .tag { padding:2px 10px; border-radius:99px; font-size:12px; font-weight:600; background:var(--accbg); color:var(--acc2); }
+  .tag.revision { background:var(--warnbg); color:var(--warn); } .tag.rechazado { background:var(--badbg); color:var(--bad); }
+  .empty { color:var(--mut); padding:10px 0; }
+  .brk { display:grid; grid-template-columns:1fr auto; gap:6px 14px; align-items:center; font-size:14px; }
+  .brk .bar { grid-column:1 / -1; height:6px; margin-bottom:6px; }
+  .ready { padding:12px 14px; border-radius:12px; border:1px solid var(--line); margin-top:14px; }
+  .ready.ok { background:var(--accbg); border-color:transparent; } .ready.no { background:var(--warnbg); border-color:transparent; }
+  ol.mini { margin:6px 0 0 18px; padding:0; }
+
+  /* ---- acabado visual ---- */
+  body { background:
+      radial-gradient(900px 380px at 85% -120px, color-mix(in srgb, var(--acc) 16%, transparent), transparent 70%),
+      radial-gradient(700px 320px at -10% 0, color-mix(in srgb, var(--acc) 9%, transparent), transparent 70%),
+      var(--bg); background-attachment:fixed; }
+  header { backdrop-filter:blur(10px); background:color-mix(in srgb, var(--bg) 82%, transparent); }
+  h1::before { content:"👟 "; }
+  .pill { background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#04201d; box-shadow:0 2px 10px color-mix(in srgb, var(--acc) 40%, transparent); }
+  .card, .kpi { transition:transform .15s, box-shadow .15s; }
+  .kpi:hover { transform:translateY(-2px); }
+  .kpi .v { background:linear-gradient(135deg,var(--ink),var(--acc2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero { background:linear-gradient(135deg, color-mix(in srgb, var(--acc) 22%, var(--card)), var(--card) 65%); border-color:color-mix(in srgb, var(--acc) 30%, var(--line)); }
+  .bar i { background:linear-gradient(90deg,var(--acc),var(--acc2)); }
+  button.btn { background:linear-gradient(135deg,var(--acc),var(--acc2)); box-shadow:0 4px 14px color-mix(in srgb, var(--acc) 35%, transparent); transition:transform .1s; }
+  button.btn:active { transform:scale(.97); }
+  button.btn.ghost { background:var(--accbg); box-shadow:none; }
+  .tile { transition:transform .12s; } .tile:hover { transform:translateY(-2px); }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 color-mix(in srgb, var(--acc) 55%, transparent); } 100% { box-shadow:0 0 0 14px transparent; } }
+
+  /* ---- roadmap ---- */
+  .road { position:relative; padding-left:34px; }
+  .road::before { content:""; position:absolute; left:15px; top:8px; bottom:8px; width:3px; background:var(--line); border-radius:3px; }
+  .ph { position:relative; margin-bottom:16px; }
+  .node { position:absolute; left:-34px; top:14px; width:32px; height:32px; border-radius:50%; background:var(--card); border:3px solid var(--line); display:grid; place-items:center; font-size:15px; z-index:1; }
+  .ph.done .node { background:var(--acc); border-color:var(--acc); color:#04201d; font-weight:800; }
+  .ph.cur .node { border-color:var(--acc); animation:pulse 1.6s infinite; }
+  .ph .card { margin:0; }
+  .ph.cur .card { border-color:var(--acc); }
+  .ph.todo .card { opacity:.82; }
+  .ph h3 { margin:0; font-size:16px; } .ph .rng { color:var(--mut); font-size:12.5px; font-weight:600; }
+  .mile { margin-top:10px; padding:8px 12px; border-radius:10px; background:var(--accbg); color:var(--acc2); font-size:13.5px; font-weight:600; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+  .chip { min-width:28px; text-align:center; padding:2px 7px; border-radius:8px; font-size:12px; font-weight:600; border:1px solid var(--line); color:var(--mut); }
+  .chip.done { background:var(--accbg); color:var(--acc2); border-color:transparent; }
+  .chip.cur { border-color:var(--acc); color:var(--ink); }
+  .gate .node { background:var(--warnbg); border-color:var(--warn); }
+  .gate.ok .node { background:var(--acc); border-color:var(--acc); }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="top"><h1 id="title">Panel Vinted</h1><span class="pill" id="pill"></span></div>
+  <nav id="nav">
+    <button data-t="hoy" class="on">Hoy</button><button data-t="road">Roadmap</button><button data-t="plan">Plan 31 días</button><button data-t="cuenta">Cuenta</button>
+    <button data-t="arts">Artículos</button><button data-t="reg">Registro</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section id="hoy" class="on"><div id="today"></div></section>
+  <section id="road"><div class="card hero"><h2 style="margin-bottom:4px">Tu camino hasta las Samba</h2>
+      <div class="hint">Siete fases. Avanzas según los días que completes, no según el calendario.</div>
+      <div class="bar" style="margin-top:12px"><i id="roadbar"></i></div><div class="hint" id="roadtxt" style="margin-top:6px"></div></div>
+    <div class="road" id="roadmap"></div></section>
+  <section id="plan"><div class="card"><h2>Calendario</h2><div class="cal" id="cal"></div>
+    <div class="legend"><span>🟩 hecho</span><span>🟧 sin completar</span><span>◻ pendiente</span><span>⬜ con borde = hoy</span></div></div>
+    <div class="card" id="dayDetail"></div></section>
+  <section id="cuenta"><div id="trust"></div></section>
+  <section id="arts"><div class="card"><h2>Artículos</h2><div class="scroll" id="listings"></div></div></section>
+  <section id="reg"><div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
+    <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div></section>
+</main>
+
+<script src="data.js"></script>
+<script>
+const D = window.DATA;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const eur = n => (n==null||isNaN(n)) ? "–" : Number(n).toFixed(2).replace(".",",")+" €";
+
+// ---- estado local (casillas) ----
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+};
+let dayDone = store.get("vp_days", {});
+let stepDone = store.get("vp_steps", {});
+let selDay = null, timer = { run:false, left:0, id:null };
+
+const startDate = () => D.account.createdAt || store.get("vp_start", null);
+function daysSince(d) {
+  if (!d) return null;
+  const a = new Date(d + "T00:00:00"), n = new Date(); n.setHours(0,0,0,0);
+  return Math.max(0, Math.round((n - a) / 86400000));
+}
+const todayIso = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+
+// ---- índice de confianza ----
+function trust() {
+  const L = D.listings, A = D.activity, R = D.ratings;
+  const age = daysSince(startDate()) || 0;
+  const sum = k => A.reduce((a,x)=>a+(+x[k]||0),0);
+  const ops = sum("ventas") + sum("compras");
+  const avg = R.length ? R.reduce((a,r)=>a+r.estrellas,0)/R.length : 0;
+  const prof = D.plan.slice(0,4).filter(p=>dayDone[p.d]).length / 4;
+  const conPrueba = L.length ? L.filter(x=>x.prueba).length / L.length : 0;
+  const parts = [
+    ["Perfil completo y verificado (días 1-4)", 15, prof, "Completa los días 1 a 4 del plan."],
+    ["Antigüedad (mín. 21 días, ideal 30)", 25, Math.min(age/30,1), "Solo el tiempo: el factor que más pesa y no se acelera."],
+    ["Artículos publicados (~10)", 10, Math.min(L.length/10,1), "Sube artículos reales al ritmo del plan."],
+    ["Operaciones reales (4)", 15, Math.min(ops/4,1), "Haz una compra o venta real que necesites."],
+    ["Valoraciones (~7, media ≥4)", 15, Math.min(R.length/7,1) * (avg && avg<4 ? .5 : 1), "Envía rápido y pide la valoración con educación."],
+    ["Uso regular (~12 días registrados)", 10, Math.min(A.length/12,1), "Cuéntame cada día lo que haces."],
+    ["Artículos con prueba de compra", 10, conPrueba, "Anota la prueba de compra de cada par."]
+  ];
+  const pts = parts.reduce((a,p)=>a+p[1]*p[2],0);
+  const pen = Math.min(30, sum("avisos")*5 + L.filter(x=>x.estado==="revision").length*3 + L.filter(x=>x.estado==="rechazado").length*5);
+  const score = Math.max(0, pts - pen);
+  const checks = [
+    ["Más de 21 días de antigüedad (ideal 30)", age >= 21],
+    ["~7 valoraciones con media ≥4", R.length >= 7 && avg >= 4],
+    ["~10 artículos publicados", L.length >= 10],
+    ["Sin avisos ni rechazos", sum("avisos")===0 && L.filter(x=>x.estado==="rechazado").length===0],
+    ["Índice de confianza ≥ 3,5", score/20 >= 3.5]
+  ];
+  return { parts, pen, score, checks, ready: checks.every(c=>c[1]), avg, ops, age };
+}
+
+function ring(score) {
+  const r = 52, c = 2*Math.PI*r, off = c*(1-score/100);
+  return `<svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="${r}" fill="none" stroke="var(--line)" stroke-width="12"/>
+    <circle cx="65" cy="65" r="${r}" fill="none" stroke="var(--acc)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 65 65)"/>
+    <text x="65" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="var(--ink)">${(score/20).toFixed(1)}</text>
+    <text x="65" y="84" text-anchor="middle" font-size="12" fill="var(--mut)">de 5</text></svg>`;
+}
+
+// ---- Hoy ----
+function renderToday() {
+  const s = startDate(), age = daysSince(s), cur = age == null ? null : age + 1, plan = D.plan;
+  const T = trust();
+  const done = Object.values(dayDone).filter(Boolean).length;
+  let html = `<div class="grid">
+    <div class="kpi"><div class="k">Índice</div><div class="v">${(T.score/20).toFixed(1)}/5</div></div>
+    <div class="kpi"><div class="k">Días hechos</div><div class="v">${done}/${plan.length}</div></div>
+    <div class="kpi"><div class="k">Artículos</div><div class="v">${D.listings.length}</div></div>
+    <div class="kpi"><div class="k">Valoraciones</div><div class="v">${D.ratings.length}</div></div></div>`;
+
+  if (cur == null) {
+    html += `<div class="card"><h2>Aún no has empezado</h2><p class="hint">Cuando crees la cuenta, pulsa el botón. Ese será tu día 1.</p><button class="btn" id="start">Empezar hoy (día 1)</button></div>`;
+  } else if (cur > plan.length) {
+    html += `<div class="card"><h2>Plan completado</h2><p class="hint">Llevas ${cur-1} días. Revisa la pestaña Cuenta para ver si ya estás listo para las Samba.</p></div>`;
+  } else {
+    const p = plan[cur-1], sd = stepDone[cur] || [];
+    const ndone = p.steps.filter((_,i)=>sd[i]).length;
+    html += `<div class="card hero"><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
+      <h2 style="font-size:20px;margin:2px 0 8px">${esc(p.title)}</h2>
+      <div class="bar"><i style="width:${ndone/p.steps.length*100}%"></i></div>
+      <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul>
+      <div class="dont">✋ ${esc(p.dont)}</div>
+      <div class="row" style="margin-top:12px">
+        <div><div class="hint">Temporizador</div><div class="timer" id="tm">${fmt(timer.left||p.min*60)}</div></div>
+        <button class="btn ghost" id="tgl">${timer.run?"Pausar":"Iniciar"}</button>
+        <button class="btn" id="fin" style="margin-left:auto">${dayDone[cur]?"✔ Día completado":"Marcar día completado"}</button>
+      </div>
+      <p class="hint" style="margin-bottom:0">Al terminar dime «completado» y qué ha pasado (minutos, mensajes, ventas, avisos) y actualizo el índice.</p></div>`;
+  }
+  $("today").innerHTML = html;
+  const st = $("start"); if (st) st.onclick = () => { store.set("vp_start", todayIso()); render(); };
+  document.querySelectorAll(".steps li").forEach(li => li.onclick = () => {
+    const a = stepDone[cur] || []; a[li.dataset.s] = !a[li.dataset.s]; stepDone[cur] = a; store.set("vp_steps", stepDone); render();
+  });
+  const f = $("fin"); if (f) f.onclick = () => { dayDone[cur] = !dayDone[cur]; store.set("vp_days", dayDone); render(); };
+  const tg = $("tgl"); if (tg) tg.onclick = toggleTimer;
+}
+const fmt = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+function toggleTimer() {
+  const cur = (daysSince(startDate()) ?? 0) + 1, p = D.plan[cur-1]; if (!p) return;
+  if (timer.run) { clearInterval(timer.id); timer.run = false; }
+  else {
+    if (!timer.left) timer.left = p.min * 60;
+    timer.run = true;
+    timer.id = setInterval(() => { timer.left--; const e = $("tm"); if (e) e.textContent = fmt(Math.max(0,timer.left));
+      if (timer.left <= 0) { clearInterval(timer.id); timer.run = false; timer.left = 0; renderToday(); } }, 1000);
+  }
+  const b = $("tgl"); if (b) b.textContent = timer.run ? "Pausar" : "Iniciar";
+}
+
+// ---- Plan ----
+function renderPlan() {
+  const age = daysSince(startDate()), cur = age == null ? null : age + 1;
+  $("cal").innerHTML = D.plan.map(p => {
+    let c = "tile";
+    if (dayDone[p.d]) c += " done"; else if (cur && p.d < cur) c += " miss";
+    if (p.d === cur) c += " cur"; if (p.d === (selDay ?? cur)) c += " sel";
+    return `<div class="${c}" data-d="${p.d}"><b>${p.d}</b><span>${p.min} min</span></div>`;
+  }).join("");
+  document.querySelectorAll(".tile").forEach(t => t.onclick = () => { selDay = +t.dataset.d; renderPlan(); });
+  const d = selDay ?? cur ?? 1, p = D.plan[d-1];
+  $("dayDetail").innerHTML = `<div class="hint">DÍA ${d} · ${p.min} MIN</div><h2 style="font-size:18px">${esc(p.title)}</h2>
+    <ol class="mini">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><div class="dont">✋ ${esc(p.dont)}</div>`;
+}
+
+// ---- Roadmap ----
+const PHASES = [
+  { ico:"🚀", name:"Alta de la cuenta", from:1, to:4, mile:"Perfil completo, cobro configurado y verificación hecha" },
+  { ico:"🧭", name:"Explorar y preparar", from:5, to:8, mile:"2 artículos fotografiados, descritos y con precio" },
+  { ico:"🌱", name:"Primeras publicaciones", from:9, to:15, mile:"3 artículos de casa publicados" },
+  { ico:"🤝", name:"Primeras operaciones", from:16, to:21, mile:"Primera compra real y primera valoración" },
+  { ico:"📈", name:"Ritmo y reputación", from:22, to:28, mile:"~9 artículos publicados y valoraciones en camino (~7)" },
+  { ico:"👟", name:"Preparar las zapatillas", from:29, to:31, mile:"Fotos, pruebas de compra y descripción listas" }
+];
+function renderRoad() {
+  const age = daysSince(startDate()), cur = age == null ? null : age + 1;
+  const total = D.plan.length, done = Object.values(dayDone).filter(Boolean).length;
+  $("roadbar").style.width = (done/total*100) + "%";
+  $("roadtxt").textContent = `${done} de ${total} días completados` + (cur ? ` · hoy es el día ${Math.min(cur,total)}` : " · aún sin empezar");
+  const T = trust();
+  let html = PHASES.map(ph => {
+    const days = D.plan.filter(p => p.d >= ph.from && p.d <= ph.to);
+    const nd = days.filter(p => dayDone[p.d]).length;
+    const isDone = nd === days.length;
+    const isCur = !isDone && cur && cur >= ph.from && cur <= ph.to;
+    const cls = isDone ? "done" : isCur ? "cur" : "todo";
+    return `<div class="ph ${cls}"><div class="node">${isDone ? "✓" : ph.ico}</div><div class="card">
+      <div class="rng">DÍAS ${ph.from}–${ph.to}${isCur ? " · ESTÁS AQUÍ" : ""}</div><h3>${ph.ico} ${esc(ph.name)}</h3>
+      <div class="bar" style="margin-top:8px;height:6px"><i style="width:${nd/days.length*100}%"></i></div>
+      <div class="mile">🎯 Hito: ${esc(ph.mile)}</div>
+      <div class="chips">${days.map(p=>`<span class="chip ${dayDone[p.d]?"done":""} ${p.d===cur?"cur":""}" title="${esc(p.title)}">${p.d}</span>`).join("")}</div></div></div>`;
+  }).join("");
+  html += `<div class="ph gate ${T.ready?"ok":""}"><div class="node">${T.ready?"✓":"🔒"}</div><div class="card">
+    <div class="rng">META</div><h3>🔓 Primer par de Samba de prueba</h3>
+    <div class="mile">${T.ready ? "Todos los criterios cumplidos: sube 1 par con tus fotos y tu prueba de compra." : "Se abre cuando se cumplan los criterios de la pestaña Cuenta (antigüedad, valoraciones, artículos y sin avisos)."}</div>
+    <div class="hint" style="margin-top:8px">Después: 1 o 2 pares a la vez, de modelos distintos, y no subir más hasta resolver cualquier revisión.</div></div></div>`;
+  $("roadmap").innerHTML = html;
+}
+
+// ---- Cuenta ----
+function renderTrust() {
+  const T = trust();
+  $("trust").innerHTML = `<div class="card"><div class="row">${ring(T.score)}
+    <div style="flex:1;min-width:220px"><h2 style="margin-bottom:4px">Índice de confianza</h2>
+    <div class="hint">Estimación mía de lo real y respaldada que parece tu cuenta. No es una puntuación de Vinted, que no publica ninguna.</div>
+    <div style="margin-top:8px"><b>${Math.round(T.score)}</b> / 100${T.pen?` · penalizaciones −${T.pen}`:""}</div></div></div>
+    <div class="ready ${T.ready?"ok":"no"}"><b>${T.ready?"✅ Listo para subir 1 par de Samba de prueba":"⏳ Todavía no: aún no subas las Samba"}</b>
+      ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div>
+    <div class="card"><h2>Desglose</h2><div class="brk">${T.parts.map(p=>`<span>${p[0]}</span><span class="hint">${Math.round(p[1]*p[2])}/${p[1]}</span><div class="bar"><i style="width:${p[2]*100}%"></i></div>`).join("")}</div>
+      <p style="margin-bottom:0"><b>Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</p></div>`;
+}
+
+// ---- Tablas ----
+function renderTables() {
+  const L = D.listings;
+  $("listings").innerHTML = L.length ? `<table><tr><th>Fecha</th><th>Artículo</th><th>Modelo/talla</th><th>Coste</th><th>Precio</th><th>Estado</th><th>Prueba</th><th>Venta</th><th>Margen</th><th>Notas</th></tr>` +
+    L.map(x=>{ const m = x.estado==="vendido" ? (x.precioVenta||0)-(x.coste||0)-(x.comisionEnvio||0) : null;
+      return `<tr><td>${esc(x.fecha)}</td><td>${esc(x.articulo)}</td><td>${esc(x.modelo)}</td><td>${eur(x.coste)}</td><td>${eur(x.precio)}</td>
+      <td><span class="tag ${esc(x.estado)}">${esc(x.estado)}</span>${x.motivo?" · "+esc(x.motivo):""}</td><td>${esc(x.prueba)}</td><td>${eur(x.precioVenta)}</td><td>${m==null?"–":eur(m)}</td><td>${esc(x.notas)}</td></tr>`; }).join("") + `</table>`
+    : `<div class="empty">Aún no hay artículos. Cuéntame cuando subas uno y lo anoto.</div>`;
+  $("activity").innerHTML = D.activity.length ? `<table><tr><th>Fecha</th><th>Min</th><th>Subidos</th><th>Ventas</th><th>Compras</th><th>Valoraciones</th><th>Avisos</th><th>Notas</th></tr>` +
+    D.activity.slice().reverse().map(a=>`<tr><td>${esc(a.fecha)}</td><td>${esc(a.minutos)}</td><td>${esc(a.subidos)}</td><td>${esc(a.ventas)}</td><td>${esc(a.compras)}</td><td>${esc(a.valoraciones)}</td><td>${esc(a.avisos)}</td><td>${esc(a.notas)}</td></tr>`).join("") + `</table>`
+    : `<div class="empty">Sin registros todavía.</div>`;
+  $("ratings").innerHTML = D.ratings.length ? D.ratings.map(r=>`<div>${"★".repeat(r.estrellas)}${"☆".repeat(5-r.estrellas)} <span class="hint">${esc(r.fecha)} ${esc(r.comentario)}</span></div>`).join("") : `<div class="empty">Sin valoraciones todavía.</div>`;
+}
+
+function render() {
+  $("title").textContent = D.account.alias;
+  const age = daysSince(startDate());
+  $("pill").textContent = age == null ? "Sin fecha de alta" : `Día ${age+1} · semana ${Math.min(Math.floor(age/7)+1,5)}`;
+  renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
+}
+$("nav").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === b.dataset.t));
+};
+render();
+</script>
+</body>
+</html>
