@@ -427,7 +427,8 @@ function renderToday() {
         <div class="tmr"><span class="timer" id="tm">${fmt(timer.left||p.min*60)}</span><button class="btn ghost sm" id="tgl">${timer.run?"Pausar":"Iniciar"}</button></div></div>
       <div class="bar" style="margin:12px 0 12px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
       <div class="chat">
-        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. Te llevará unos <b>${p.min} minutos</b>.<br><span class="suma">Hoy suma a tu índice: ${esc(p.suma || "uso regular")}</span></div></div>
+        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. La tarea lleva unos <b>${p.min} minutos</b> (es lo que cuesta hacerla, no un tiempo mínimo en la app).<br><span class="suma">Hoy suma a tu índice: ${esc(p.suma || "uso regular")}</span>
+          <div class="hint" style="margin-top:8px">${cur >= 9 ? "Ya con anuncios: haz la tarea en una sola sesión, mejor por la tarde-noche, y echa un vistazo de 1-2 minutos a las notificaciones una o dos veces más durante el día para responder pronto." : "Una sola sesión al día es suficiente. No hace falta entrar más veces ni dar likes para aparentar actividad."}</div></div></div>
         ${missed.length ? `<div class="msg"><div class="av"></div><div class="bub warn"> Te quedan ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}). No pasa nada: haz lo de hoy y sigue a tu ritmo.</div></div>` : ""}
         <div class="msg"><div class="av"></div><div class="bub">Esto es lo que toca hoy (${ndone}/${p.steps.length}):
           <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul></div></div>
