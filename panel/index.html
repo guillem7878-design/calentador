@@ -816,8 +816,6 @@ function analyzeInc(tipo, texto) {
     notas.push("Hay lenguaje de reclamación seria. Responde solo por la app, con calma, y conserva toda la conversación."); }
   if (tipo === "devolucion" && !autent && /talla|defecto|da[nñ]ad|roto|mancha|no me (gust|qued)|pequeñ|grande/.test(t)) { penal = Math.min(penal, 3); grav = "baja";
     notas.push("El motivo parece normal (talla o estado). Pesa poco si lo gestionas bien."); }
-  if (tipo === "revision" && /bucle|otra vez|de nuevo|vuelve a|cada vez|siempre|sigue(n)? (entrando|en revisi)/.test(t)) { penal = Math.max(penal, 9); grav = "alta";
-    notas.push("Si cada anuncio nuevo vuelve a revisión, Vinted está tratando ese modelo como riesgo en tu cuenta: las pruebas de un caso no desbloquean el siguiente. Deja de subir más, no cambies títulos ni fotos para esquivarlo y escribe a soporte desde el último aviso con la prueba de compra (factura, email o captura del pedido)."); }
   if (tipo === "bloqueo") notas.push("El panel no puede levantar un bloqueo: eso solo lo decide Vinted. Lo mejor es una respuesta rápida y tranquila a soporte.");
   if (tipo === "estafa") notas.push("Esto no resta puntos: reportarlo y no salir de la app te protege.");
   const resuelta = /(ya )?(est[aá]|queda|qued[oó]|fue) (resuelt|solucionad|cerrad)|se (ha )?(resuelt|solucionad)|ya lo (solucion|resolv)/.test(t);
