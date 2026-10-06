@@ -117,40 +117,119 @@
   .s.gate.ok { border-color:var(--acc); } .s.gate.ok .dot { background:var(--acc); border-color:var(--acc); }
 
   h2[style*="font-size"] { text-transform:none; letter-spacing:-.015em; color:var(--ink); font-weight:700; }
+
+  /* ===== compacto ===== */
+  .view { display:none; } .view.on { display:block; }
+  .wrap { max-width:1240px; padding:0 18px; }
+  .top { padding:12px 0 10px; gap:14px; flex-wrap:nowrap; }
+  @media (max-width:760px) { .top { flex-wrap:wrap; } }
+  h1 { font-size:17px; } h1::before { width:34px; height:34px; font-size:16px; border-radius:10px; }
+  #nav { display:flex; gap:4px; padding:4px; background:var(--card); border:1px solid var(--line); border-radius:14px; margin:0 auto; }
+  #nav button { border:0; background:transparent; color:var(--mut); font:inherit; font-weight:600; font-size:13px; padding:7px 16px; border-radius:10px; cursor:pointer; }
+  #nav button.on { background:linear-gradient(135deg,rgba(94,234,212,.22),rgba(139,123,255,.22)); color:#fff; box-shadow:0 0 0 1px rgba(94,234,212,.3) inset; }
+  main.wrap { padding-top:4px; padding-bottom:40px; }
+  .card { padding:16px; margin-bottom:14px; border-radius:16px; }
+  h2 { margin-bottom:10px; font-size:11px; }
+
+  .kpis { display:grid; gap:10px; grid-template-columns:repeat(7,minmax(0,1fr)); margin-bottom:14px; }
+  @media (max-width:1000px) { .kpis { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  @media (max-width:520px) { .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .kpis .kpi { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; }
+  .kpi .ico { font-size:18px; width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:rgba(255,255,255,.05); flex:none; }
+  .kpis .kpi .v { font-size:18px; margin-top:0; line-height:1.15; }
+  .kpis .kpi .k { font-size:9.5px; }
+
+  .rm { padding:12px 16px 14px; }
+  .rmh { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .rmh b { font-size:13px; }
+  .rm .bar { height:5px; margin-bottom:12px; }
+  .stp { gap:8px; }
+  .s { display:flex; align-items:center; gap:9px; text-align:left; padding:9px 10px 12px; border-radius:12px; position:relative; overflow:hidden; }
+  .s .dot { width:28px; height:28px; margin:0; font-size:13px; flex:none; border-width:2px; }
+  .s .nm { font-size:11.5px; min-height:0; line-height:1.2; }
+  .s .rg { font-size:10px; margin:1px 0 0; }
+  .s > div:not(.dot):not(.bar) { min-width:0; }
+  .s .bar { position:absolute; left:0; right:0; bottom:0; height:3px; border-radius:0; }
+  .s .txt { display:block; min-width:0; }
+
+  .main2 { display:grid; gap:14px; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); align-items:start; }
+  @media (max-width:900px) { .main2 { grid-template-columns:1fr; } }
+  .main2 > div > .card:last-child, .side > .card:last-child { margin-bottom:0; }
+  .side { display:grid; gap:14px; }
+  .side > * { min-width:0; } .side .card { margin:0; }
+
+  .today .th { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .tmr { display:flex; align-items:center; gap:8px; }
+  .timer { font-size:22px; }
+  button.btn.sm { padding:6px 12px; border-radius:10px; }
+  .steps { margin:0 0 10px; } .steps li { padding:9px 12px; margin-bottom:6px; gap:11px; font-size:13.5px; border-radius:12px; }
+  .chk { width:20px; height:20px; font-size:12px; }
+  .dont { padding:8px 12px; font-size:12.5px; margin:8px 0; }
+  .mini-alert { margin-top:10px; padding:6px 10px; border-radius:10px; font-size:12px; color:var(--warn); background:var(--warnbg); }
+  #today > p.hint { margin:10px 0 0; font-size:11.5px; }
+
+  .tr .trh { display:flex; gap:14px; align-items:center; }
+  .tr .trh svg { width:104px; height:104px; flex:none; }
+  .tr .trc { flex:1; min-width:0; }
+  .ready { margin-top:0; padding:9px 12px; border-radius:12px; font-size:12.5px; }
+  .ready .hint { font-size:12px; line-height:1.5; }
+  details summary { cursor:pointer; color:var(--mut); font-size:12.5px; margin-top:10px; font-weight:600; }
+  details[open] summary { color:var(--ink); }
+  .brk { margin-top:10px; font-size:12.5px; }
+
+  .cal { grid-template-columns:repeat(auto-fill,minmax(34px,1fr)); gap:6px; }
+  .tile { padding:7px 0; border-radius:10px; } .tile b { font-size:13px; }
+  .legend { margin:0; gap:10px; font-size:11px; }
+  .dd { margin-top:12px; padding:12px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--line); font-size:13px; }
+  .dd ol.mini { margin:6px 0 6px 16px; }
+  th, td { padding:9px 8px; }
 </style>
 </head>
 <body>
 <header><div class="wrap">
-  <div class="top"><h1 id="title">Panel Vinted</h1><span class="pill" id="pill"></span></div>
+  <div class="top">
+    <h1 id="title">Panel Vinted</h1>
+    <nav id="nav"><button data-t="v-panel" class="on">Panel</button><button data-t="v-arts">Artículos</button><button data-t="v-reg">Registro</button></nav>
+    <span class="pill" id="pill"></span>
+  </div>
 </div></header>
 
 <main class="wrap">
-  <div class="card hero"><div class="row" style="justify-content:space-between;gap:8px"><h2 style="margin:0">🗺️ Roadmap hasta las Samba</h2><span class="hint" id="roadtxt"></span></div>
-    <div class="bar" style="margin:10px 0 14px"><i id="roadbar"></i></div><div class="stp" id="roadmap"></div></div>
-
-  <div class="dash">
-    <div>
+  <section id="v-panel" class="view on">
+    <div class="kpis" id="kpis"></div>
+    <div class="card rm"><div class="rmh"><b>🗺️ Roadmap</b><span class="hint" id="roadtxt"></span></div>
+      <div class="bar"><i id="roadbar"></i></div><div class="stp" id="roadmap"></div></div>
+    <div class="main2">
       <div id="today"></div>
-      <div class="card"><h2>📝 Registrar el día</h2><div id="fAct"></div></div>
+      <div class="side">
+        <div id="trust"></div>
+        <div class="card"><div class="rmh"><b>📅 Calendario</b>
+          <span class="legend"><span><i class="lg" style="background:var(--acc)"></i>hecho</span><span><i class="lg" style="background:var(--warn)"></i>pendiente</span><span><i class="lg" style="border:2px solid var(--acc)"></i>hoy</span></span></div>
+          <div class="cal" id="cal"></div><div id="dayDetail"></div></div>
+      </div>
     </div>
-    <div>
-      <div id="trust"></div>
-      <div class="card"><h2>📅 Calendario</h2><div class="cal" id="cal"></div>
-        <div class="legend"><span><i class="lg" style="background:var(--acc)"></i>hecho</span><span><i class="lg" style="background:var(--warn)"></i>sin completar</span><span><i class="lg" style="background:rgba(255,255,255,.2)"></i>pendiente</span><span><i class="lg" style="border:2px solid var(--acc)"></i>hoy</span></div></div>
-      <div class="card" id="dayDetail"></div>
+  </section>
+
+  <section id="v-arts" class="view">
+    <div class="card"><h2>Añadir artículo</h2><div id="fList"></div></div>
+    <div class="card"><h2>Artículos</h2><div class="scroll" id="listings"></div></div>
+  </section>
+
+  <section id="v-reg" class="view">
+    <div class="main2">
+      <div>
+        <div class="card"><h2>Registrar el día</h2><div id="fAct"></div></div>
+        <div class="card"><h2>Añadir valoración</h2><div id="fRat"></div></div>
+      </div>
+      <div>
+        <div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
+        <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div>
+        <div class="card"><h2>Copia de seguridad</h2><p class="hint" style="margin-top:0">Tus datos se guardan en este navegador. Descarga una copia de vez en cuando.</p>
+          <div class="row"><button class="btn ghost" id="exp">Descargar copia</button>
+          <button class="btn ghost" id="imp">Restaurar copia</button><input type="file" id="impf" accept=".json" hidden></div></div>
+      </div>
     </div>
-  </div>
-
-  <div class="card"><h2>👟 Artículos</h2><div id="fList"></div><div class="scroll" id="listings" style="margin-top:14px"></div></div>
-
-  <div class="dash">
-    <div class="card"><h2>📊 Actividad diaria</h2><div class="scroll" id="activity"></div></div>
-    <div class="card"><h2>⭐ Valoraciones</h2><div id="ratings" style="margin-bottom:14px"></div><div id="fRat"></div></div>
-  </div>
-
-  <div class="card"><h2>💾 Copia de seguridad</h2><p class="hint" style="margin-top:0">Tus datos se guardan en este navegador. Descarga una copia de vez en cuando.</p>
-    <div class="row"><button class="btn ghost" id="exp">Descargar copia</button>
-    <button class="btn ghost" id="imp">Restaurar copia</button><input type="file" id="impf" accept=".json" hidden></div></div>
+  </section>
 </main>
 
 <script src="data.js"></script>
@@ -224,16 +303,28 @@ function ring(score) {
     <text x="65" y="84" text-anchor="middle" font-size="12" fill="var(--mut)">de 5</text></svg>`;
 }
 
+// ---- Resumen superior ----
+function renderKpis() {
+  const T = trust(), age = daysSince(startDate());
+  const done = Object.values(dayDone).filter(Boolean).length;
+  const sold = D.listings.filter(x => x.estado === "vendido");
+  const margen = sold.reduce((a,x) => a + (x.precioVenta||0) - (x.coste||0) - (x.comisionEnvio||0), 0);
+  const rev = D.listings.filter(x => x.estado === "revision").length;
+  $("kpis").innerHTML = [
+    ["🛡️","Índice",(T.score/20).toFixed(1)+"/5"],
+    ["📆","Día", age == null ? "–" : Math.min(age+1, D.plan.length)+"/"+D.plan.length],
+    ["✅","Hechos", done],
+    ["👟","Artículos", D.listings.length],
+    ["⭐","Valoraciones", D.ratings.length],
+    ["🔎","Revisión", rev],
+    ["💶","Margen", eur(margen)]
+  ].map(([i,k,v]) => `<div class="kpi"><span class="ico">${i}</span><div><div class="k">${k}</div><div class="v">${v}</div></div></div>`).join("");
+}
+
 // ---- Hoy ----
 function renderToday() {
   const s = startDate(), age = daysSince(s), cur = age == null ? null : age + 1, plan = D.plan;
-  const T = trust();
-  const done = Object.values(dayDone).filter(Boolean).length;
-  let html = `<div class="grid">
-    <div class="kpi"><div class="k">Índice</div><div class="v">${(T.score/20).toFixed(1)}/5</div></div>
-    <div class="kpi"><div class="k">Días hechos</div><div class="v">${done}/${plan.length}</div></div>
-    <div class="kpi"><div class="k">Artículos</div><div class="v">${D.listings.length}</div></div>
-    <div class="kpi"><div class="k">Valoraciones</div><div class="v">${D.ratings.length}</div></div></div>`;
+  let html = "";
 
   if (cur == null) {
     html += `<div class="card hero"><h2>Aún no has empezado</h2><p class="hint">Cuando hayas creado la cuenta de Vinted, pulsa el botón. Hoy será tu día 1 y el panel contará los días solo.</p><button class="btn" id="start">✅ He creado la cuenta</button></div>`;
@@ -242,19 +333,17 @@ function renderToday() {
   } else {
     const p = plan[cur-1], sd = stepDone[cur] || [];
     const missed = plan.filter(x => x.d < cur && !dayDone[x.d]).map(x => x.d);
-    if (missed.length) html += `<div class="dont" style="margin:0 0 14px">⏳ Tienes ${missed.length} día${missed.length>1?"s":""} sin completar (día${missed.length>1?"s":""} ${missed.join(", ")}). No pasa nada: haz hoy lo de hoy y, si puedes, marca los que sí hiciste en el Plan. El índice solo refleja lo que registres.</div>`;
     const ndone = p.steps.filter((_,i)=>sd[i]).length;
-    html += `<div class="card hero"><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
-      <h2 style="font-size:20px;margin:2px 0 8px">${esc(p.title)}</h2>
-      <div class="bar"><i style="width:${ndone/p.steps.length*100}%"></i></div>
+    html += `<div class="card hero today"><div class="th"><div><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
+        <h2 style="font-size:19px;margin:2px 0 0">${esc(p.title)}</h2></div>
+        <div class="tmr"><span class="timer" id="tm">${fmt(timer.left||p.min*60)}</span><button class="btn ghost sm" id="tgl">${timer.run?"⏸":"▶"}</button></div></div>
+      ${missed.length ? `<div class="mini-alert">⏳ ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}) · no pasa nada, haz lo de hoy</div>` : ""}
+      <div class="bar" style="margin:12px 0 10px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
       <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul>
       <div class="dont">✋ ${esc(p.dont)}</div>
-      <div class="row" style="margin-top:12px">
-        <div><div class="hint">Temporizador</div><div class="timer" id="tm">${fmt(timer.left||p.min*60)}</div></div>
-        <button class="btn ghost" id="tgl">${timer.run?"Pausar":"Iniciar"}</button>
-        <button class="btn" id="fin" style="margin-left:auto">${dayDone[cur]?"✔ Día completado":"Marcar día completado"}</button>
-      </div>
-      <p class="hint" style="margin-bottom:0">Al terminar dime «completado» y qué ha pasado (minutos, mensajes, ventas, avisos) y actualizo el índice.</p></div>`;
+      <div class="row" style="margin-top:12px;gap:10px">
+        <button class="btn" id="fin">${dayDone[cur]?"✔ Día completado":"Marcar día completado"}</button>
+        <button class="btn ghost" id="toreg">📝 Registrar el día</button></div></div>`;
   }
   if (cur != null) html += `<p class="hint" style="text-align:center">Alta: ${esc(s)} · <a href="#" id="rst" style="color:var(--mut)">cambiar fecha de alta</a></p>`;
   $("today").innerHTML = html;
@@ -270,6 +359,7 @@ function renderToday() {
   });
   const f = $("fin"); if (f) f.onclick = () => { dayDone[cur] = !dayDone[cur]; store.set("vp_days", dayDone); render(); };
   const tg = $("tgl"); if (tg) tg.onclick = toggleTimer;
+  const tr = $("toreg"); if (tr) tr.onclick = () => showTab("v-reg");
 }
 const fmt = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 function toggleTimer() {
@@ -281,7 +371,7 @@ function toggleTimer() {
     timer.id = setInterval(() => { timer.left--; const e = $("tm"); if (e) e.textContent = fmt(Math.max(0,timer.left));
       if (timer.left <= 0) { clearInterval(timer.id); timer.run = false; timer.left = 0; renderToday(); } }, 1000);
   }
-  const b = $("tgl"); if (b) b.textContent = timer.run ? "Pausar" : "Iniciar";
+  const b = $("tgl"); if (b) b.textContent = timer.run ? "⏸" : "▶";
 }
 
 // ---- Plan ----
@@ -291,12 +381,14 @@ function renderPlan() {
     let c = "tile";
     if (dayDone[p.d]) c += " done"; else if (cur && p.d < cur) c += " miss";
     if (p.d === cur) c += " cur"; if (p.d === (selDay ?? cur)) c += " sel";
-    return `<div class="${c}" data-d="${p.d}"><b>${p.d}</b><span>${p.min} min</span></div>`;
+    return `<div class="${c}" data-d="${p.d}" title="${esc(p.title)} · ${p.min} min"><b>${p.d}</b></div>`;
   }).join("");
-  document.querySelectorAll(".tile").forEach(t => t.onclick = () => { selDay = +t.dataset.d; renderPlan(); });
-  const d = selDay ?? cur ?? 1, p = D.plan[d-1];
-  $("dayDetail").innerHTML = `<div class="hint">DÍA ${d} · ${p.min} MIN</div><h2 style="font-size:18px">${esc(p.title)}</h2>
-    <ol class="mini">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><div class="dont">✋ ${esc(p.dont)}</div>`;
+  document.querySelectorAll(".tile").forEach(t => t.onclick = () => { const n = +t.dataset.d; selDay = (selDay === n) ? null : n; renderPlan(); });
+  if (selDay != null && selDay !== cur) {
+    const p = D.plan[selDay-1];
+    $("dayDetail").innerHTML = `<div class="dd"><div class="hint">DÍA ${selDay} · ${p.min} MIN</div><b>${esc(p.title)}</b>
+      <ol class="mini">${p.steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol><div class="hint">✋ ${esc(p.dont)}</div></div>`;
+  } else $("dayDetail").innerHTML = "";
 }
 
 // ---- Roadmap ----
@@ -321,25 +413,26 @@ function renderRoad() {
     const isCur = !isDone && cur && cur >= ph.from && cur <= ph.to;
     const cls = isDone ? "done" : isCur ? "cur" : "todo";
     return `<div class="s ${cls}" title="${esc(ph.mile)}"><div class="dot">${isDone ? "✓" : ph.ico}</div>
-      <div class="nm">${esc(ph.name)}</div><div class="rg">días ${ph.from}–${ph.to}${isCur ? " · estás aquí" : ""}</div>
+      <div class="txt"><div class="nm">${esc(ph.name)}</div><div class="rg">días ${ph.from}–${ph.to}${isCur ? " · aquí" : ""}</div></div>
       <div class="bar"><i style="width:${nd/days.length*100}%"></i></div></div>`;
   }).join("");
   html += `<div class="s gate ${T.ready?"ok":""}" title="Se abre cuando se cumplan los criterios del índice de confianza"><div class="dot">${T.ready?"✓":"🔒"}</div>
-    <div class="nm">Primer par de Samba</div><div class="rg">${T.ready ? "¡criterios cumplidos!" : "bloqueado"}</div><div class="bar"><i style="width:${T.ready?100:0}%"></i></div></div>`;
+    <div class="txt"><div class="nm">Primer par de Samba</div><div class="rg">${T.ready ? "¡criterios cumplidos!" : "bloqueado"}</div></div><div class="bar"><i style="width:${T.ready?100:0}%"></i></div></div>`;
   $("roadmap").innerHTML = html;
 }
 
 // ---- Cuenta ----
 function renderTrust() {
   const T = trust();
-  $("trust").innerHTML = `<div class="card"><div class="row">${ring(T.score)}
-    <div style="flex:1;min-width:220px"><h2 style="margin-bottom:4px">Índice de confianza</h2>
-    <div class="hint">Estimación mía de lo real y respaldada que parece tu cuenta. No es una puntuación de Vinted, que no publica ninguna.</div>
-    <div style="margin-top:8px"><b>${Math.round(T.score)}</b> / 100${T.pen?` · penalizaciones −${T.pen}`:""}</div></div></div>
-    <div class="ready ${T.ready?"ok":"no"}"><b>${T.ready?"✅ Listo para subir 1 par de Samba de prueba":"⏳ Todavía no: aún no subas las Samba"}</b>
-      ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div>
-    <div class="card"><h2>Desglose</h2><div class="brk">${T.parts.map(p=>`<span>${p[0]}</span><span class="hint">${Math.round(p[1]*p[2])}/${p[1]}</span><div class="bar"><i style="width:${p[2]*100}%"></i></div>`).join("")}</div>
-      <p style="margin-bottom:0"><b>Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</p></div>`;
+  const open = $("trust").querySelector("details")?.open;
+  $("trust").innerHTML = `<div class="card tr"><div class="trh">${ring(T.score)}
+    <div class="trc"><h2 style="margin-bottom:6px">Índice de confianza</h2>
+      <div class="ready ${T.ready?"ok":"no"}"><b>${T.ready?"✅ Listo: 1 par de Samba de prueba":"⏳ Aún no subas las Samba"}</b>
+      ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div></div>
+    <div class="hint" style="margin-top:10px"><b style="color:var(--ink)">Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div>
+    <details ${open?"open":""}><summary>Ver desglose · ${Math.round(T.score)}/100${T.pen?` · −${T.pen}`:""}</summary>
+      <div class="brk">${T.parts.map(p=>`<span>${p[0]}</span><span class="hint">${Math.round(p[1]*p[2])}/${p[1]}</span><div class="bar"><i style="width:${p[2]*100}%"></i></div>`).join("")}</div>
+      <div class="hint" style="margin-top:6px">Estimación mía, no una puntuación de Vinted.</div></details></div>`;
 }
 
 // ---- Tablas ----
@@ -414,8 +507,14 @@ function render() {
   $("title").textContent = D.account.alias;
   const age = daysSince(startDate());
   $("pill").textContent = age == null ? "Sin fecha de alta" : `Día ${age+1} · semana ${Math.min(Math.floor(age/7)+1,5)}`;
-  renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
+  renderKpis(); renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
 }
+function showTab(id) {
+  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("on", x.dataset.t === id));
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("on", s.id === id));
+  window.scrollTo(0, 0);
+}
+$("nav").onclick = e => { const b = e.target.closest("button"); if (b) showTab(b.dataset.t); };
 // El panel se entera solo cuando cambia el día (medianoche) o al volver a la pestaña
 let lastDay = todayIso();
 const checkDay = () => { if (todayIso() !== lastDay) { lastDay = todayIso(); selDay = null; render(); } };
