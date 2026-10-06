@@ -291,7 +291,7 @@
   <section id="v-panel" class="view on">
     <div id="hero"></div>
     <div class="kpis" id="kpis"></div>
-    <div class="card rm"><div class="rmh"><b> Roadmap</b><span class="hint" id="roadtxt"></span></div>
+    <div class="card rm"><div class="rmh"><b>Ruta segura hacia las Samba</b><span class="hint" id="roadtxt"></span></div>
       <div class="bar"><i id="roadbar"></i></div><div class="stp" id="roadmap"></div></div>
     <div class="main2">
       <div id="today"></div>
@@ -539,63 +539,90 @@ const PHASES = [
   { ico:"", name:"Ritmo y reputación", from:22, to:28, mile:"~9 artículos publicados y valoraciones en camino (~7)" },
   { ico:"", name:"Preparar las zapatillas", from:29, to:31, mile:"Fotos, pruebas de compra y descripción listas" }
 ];
+const RICON = [
+  '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/>',
+  '<path d="M3 8h3.5l1.8-3h7.4l1.8 3H21v11H3z"/><circle cx="12" cy="13.5" r="3.6" fill="#fff"/><circle cx="12" cy="13.5" r="1.6"/>',
+  '<path d="M3 12V3.5h8.5L21 13l-8 8z"/><circle cx="8" cy="8" r="1.8" fill="#fff"/>',
+  '<path d="M12 2.5l9 4.6v9.8L12 21.5l-9-4.6V7.1z"/><path d="M3.3 7.2L12 11.6l8.7-4.4M12 11.6v9.6" fill="none" stroke="#fff" stroke-width="1.6"/>',
+  '<path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/>',
+  '<path d="M2 15.5V11c0-1.1.9-1.9 2-1.9h3.8l2-4.2h2.6c.4 2.5 1.8 4 4.2 4.8l2.9 1c1.8.6 2.7 1.8 2.7 3.6v1.2z"/><rect x="2" y="15.5" width="20" height="3.4" rx="1.7" fill="#fff" stroke="currentColor" stroke-width="1.3"/>'
+];
+
 function renderRoad() {
   const age = daysSince(startDate()), cur = age == null ? null : age + 1;
   const total = D.plan.length, done = Object.values(dayDone).filter(Boolean).length;
-  $("roadtxt").textContent = `${done} de ${total} días completados` + (cur ? ` · hoy es el día ${Math.min(cur,total)}` : " · aún sin empezar");
   const T = trust(), V = window.innerWidth < 720, ns = "http://www.w3.org/2000/svg";
-  const W = V ? 360 : 1000, H = V ? 860 : 280, n = 7, P = [];
-  for (let i = 0; i <= n; i++) { const t = i / n; P.push(V ? [i % 2 ? 285 : 75, 60 + t * (H - 120)] : [60 + t * (W - 120), i % 2 ? 200 : 85]); }
+  const W = V ? 360 : 1000, H = V ? 900 : 300, n = 7, P = [];
+  for (let i = 0; i <= n; i++) { const t = i / n; P.push(V ? [i % 2 ? 285 : 75, 70 + t * (H - 150)] : [64 + t * (W - 140), i % 2 ? 215 : 90]); }
   let d = `M ${P[0][0]} ${P[0][1]}`;
   for (let i = 1; i <= n; i++) { const [x0, y0] = P[i-1], [x1, y1] = P[i];
     d += V ? ` C ${x0} ${(y0+y1)/2}, ${x1} ${(y0+y1)/2}, ${x1} ${y1}` : ` C ${(x0+x1)/2} ${y0}, ${(x0+x1)/2} ${y1}, ${x1} ${y1}`; }
   const tmp = document.createElementNS(ns, "svg"), pa = document.createElementNS(ns, "path");
   pa.setAttribute("d", d); tmp.appendChild(pa); tmp.style.cssText = "position:absolute;visibility:hidden;width:0;height:0"; document.body.appendChild(tmp);
-  const L = pa.getTotalLength(), at = f => { const q = pa.getPointAtLength(Math.max(0, Math.min(1, f)) * L); return [q.x, q.y]; };
-  const fd = dd => (dd - 1) / (total - 1) * 0.93;
+  const L = pa.getTotalLength(), cl = f => Math.max(0, Math.min(1, f));
+  const at = f => { const q = pa.getPointAtLength(cl(f) * L); return [q.x, q.y]; };
+  const fd = dd => (dd - 1) / (total - 1) * 0.92;
+  const tan = f => { const a = at(f - 0.004), b = at(f + 0.004); return Math.atan2(b[1] - a[1], b[0] - a[0]); };
   const day = cur ? Math.min(cur, total) : null;
-  const dayPts = D.plan.map(p => at(fd(p.d))), phPts = PHASES.map(ph => at(fd(ph.from))), goal = at(1), start = at(0), me = day ? at(fd(day)) : null;
+  const dayPts = D.plan.map(p => ({ p: at(fd(p.d)), a: tan(fd(p.d)) })), phPts = PHASES.map(ph => at(fd(ph.from)));
+  const goal = at(1), start = at(0), me = day ? at(fd(day)) : null;
   document.body.removeChild(tmp);
 
-  let g = `<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#09b1ba"/><stop offset="1" stop-color="#7cc8ff"/></linearGradient></defs>`;
-  g += `<circle cx="${V ? 300 : 880}" cy="${V ? 130 : 60}" r="70" fill="#ffc83d" opacity=".16"/><circle cx="${V ? 60 : 130}" cy="${V ? 700 : 230}" r="55" fill="#ff6f59" opacity=".13"/><circle cx="${V ? 310 : 500}" cy="${V ? 480 : 245}" r="40" fill="#09b1ba" opacity=".12"/>`;
-  g += `<path d="${d}" fill="none" stroke="#ebe6da" stroke-width="18" stroke-linecap="round"/>`;
-  if (day) g += `<path d="${d}" fill="none" stroke="url(#rg)" stroke-width="18" stroke-linecap="round" stroke-dasharray="${fd(day) * L} ${L * 2}"/>`;
-  g += `<path d="${d}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="2 13" stroke-linecap="round" opacity=".9"/>`;
+  const sellos = PHASES.filter(ph => D.plan.filter(p => p.d >= ph.from && p.d <= ph.to).every(p => dayDone[p.d])).length;
+  $("roadtxt").textContent = `${done} de ${total} días · ${sellos}/${PHASES.length} sellos de seguridad` + (cur ? ` · hoy es el día ${Math.min(cur,total)}` : " · aún sin empezar");
 
+  let g = `<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#09b1ba"/><stop offset="1" stop-color="#7cc8ff"/></linearGradient></defs>`;
+  g += `<circle cx="${V ? 300 : 900}" cy="${V ? 120 : 70}" r="64" fill="#ffc83d" opacity=".15"/><circle cx="${V ? 56 : 120}" cy="${V ? 760 : 250}" r="52" fill="#ff6f59" opacity=".12"/><circle cx="${V ? 316 : 520}" cy="${V ? 470 : 262}" r="38" fill="#09b1ba" opacity=".11"/>`;
+  // suelo del camino
+  g += `<path d="${d}" fill="none" stroke="#efe9dc" stroke-width="30" stroke-linecap="round"/>`;
+  g += `<path d="${d}" fill="none" stroke="#e2dccd" stroke-width="30" stroke-linecap="round" stroke-dasharray="1 15" opacity=".8"/>`;
+  if (day) g += `<path d="${d}" fill="none" stroke="url(#rg)" stroke-width="30" stroke-linecap="round" opacity=".22" stroke-dasharray="${fd(day) * L} ${L * 2}"/>`;
+
+  // huellas de suela: una por dia, alternando pie izquierdo y derecho
   const starts = new Set(PHASES.map(p => p.from));
   D.plan.forEach((p, i) => {
     if (starts.has(p.d)) return;
-    const [x, y] = dayPts[i], ok = dayDone[p.d], miss = !ok && cur && p.d < cur;
-    g += `<circle cx="${x}" cy="${y}" r="5.5" fill="${ok ? "#00838d" : miss ? "#ff6f59" : "#fff"}" stroke="${ok || miss ? "#fff" : "#cfc8b8"}" stroke-width="2"><title>Día ${p.d}: ${esc(p.title)}</title></circle>`;
+    const { p: [x, y], a } = dayPts[i], side = i % 2 ? 1 : -1, ox = -Math.sin(a) * 6 * side, oy = Math.cos(a) * 6 * side;
+    const ok = dayDone[p.d], miss = !ok && cur && p.d < cur, deg = a * 180 / Math.PI + 90;
+    const fill = ok ? "#00838d" : miss ? "#ff6f59" : "#fff", stroke = ok || miss ? "none" : "#cdc5b3";
+    g += `<g transform="translate(${x + ox},${y + oy}) rotate(${deg}) scale(${side === 1 ? 1 : -1},1)"><title>Día ${p.d}: ${esc(p.title)}</title>
+      <ellipse cx="0" cy="-4.2" rx="4.3" ry="6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/><ellipse cx="0" cy="6.4" rx="3.3" ry="3.6" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></g>`;
   });
 
+  // sellos de seguridad (fases)
   PHASES.forEach((ph, i) => {
     const days = D.plan.filter(p => p.d >= ph.from && p.d <= ph.to), nd = days.filter(p => dayDone[p.d]).length;
     const isDone = nd === days.length, isCur = !isDone && cur && cur >= ph.from && cur <= ph.to;
     const [x, y] = phPts[i];
-    const fill = isDone ? "#09b1ba" : isCur ? "#0f2c36" : "#fff", stroke = isDone ? "#fff" : isCur ? "#ffc83d" : "#cfc8b8";
-    g += `<circle cx="${x}" cy="${y}" r="19" fill="${fill}" stroke="${stroke}" stroke-width="4"><title>${esc(ph.mile)}</title></circle>
-      <text x="${x}" y="${y + 4.5}" text-anchor="middle" class="rn" fill="${isDone || isCur ? "#fff" : "#5f7580"}">${isDone ? "✓" : i + 1}</text>`;
-    const up = !V && y < H / 2, lx = V ? (x < W / 2 ? x + 30 : x - 30) : Math.max(70, Math.min(W - 70, x)), an = V ? (x < W / 2 ? "start" : "end") : "middle";
-    const ly = V ? y - 2 : (up ? y - 36 : y + 44);
+    const bg = isDone ? "#09b1ba" : isCur ? "#0f2c36" : "#fff", ring = isDone ? "#fff" : isCur ? "#ffc83d" : "#cdc5b3", ic = isDone || isCur ? "#fff" : "#8a9aa1";
+    g += `<g transform="translate(${x},${y})"><title>${esc(ph.mile)}</title><circle r="23" fill="${bg}" stroke="${ring}" stroke-width="4"/>
+      <g transform="translate(-12,-12)" fill="${ic}" color="${ic}">${RICON[i]}</g>
+      ${isDone ? '<g transform="translate(17,-17)"><path d="M0 -10 L9 -6.5 V0.5 C9 6 4.5 9 0 11 C-4.5 9 -9 6 -9 0.5 V-6.5 Z" fill="#1fa971" stroke="#fff" stroke-width="2"/><path d="M-4 0.5 L-1 3.5 L4.5 -3" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>' : ""}</g>`;
+    const up = !V && y < H / 2, lx = V ? (x < W / 2 ? x + 36 : x - 36) : Math.max(70, Math.min(W - 70, x)), an = V ? (x < W / 2 ? "start" : "end") : "middle";
+    const ly = V ? y - 2 : (up ? y - 40 : y + 48);
     g += `<text x="${lx}" y="${ly}" text-anchor="${an}" class="rl">${esc(ph.name)}</text><text x="${lx}" y="${ly + 14}" text-anchor="${an}" class="rs">días ${ph.from}–${ph.to}</text>`;
   });
 
-  // salida
-  g += `<g transform="translate(${start[0]},${start[1]})"><circle r="19" fill="#fff" stroke="#0f2c36" stroke-width="4"/><path d="M-5 8V-8M-5 -8H8L4 -3L8 2H-5" fill="#ff6f59" stroke="#0f2c36" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></g>`;
-  // meta
-  const ready = T.ready;
-  g += `<g transform="translate(${goal[0]},${goal[1]})"><circle r="28" fill="${ready ? "#1fa971" : "#ffc83d"}" stroke="#fff" stroke-width="4"/>
-    ${ready ? '<path d="M-9 1L-3 7L10 -7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' : '<rect x="-9" y="-2" width="18" height="13" rx="3" fill="#0f2c36"/><path d="M-5 -2V-6a5 5 0 0 1 10 0V-2" fill="none" stroke="#0f2c36" stroke-width="3"/>'}</g>
-    <text x="${V ? goal[0] - 40 : goal[0]}" y="${V ? goal[1] + 4 : goal[1] + 50}" text-anchor="${V ? "end" : "middle"}" class="rl">Primer par de Samba</text>
-    <text x="${V ? goal[0] - 40 : goal[0]}" y="${V ? goal[1] + 18 : goal[1] + 64}" text-anchor="${V ? "end" : "middle"}" class="rs">${ready ? "¡desbloqueado!" : "bloqueado"}</text>`;
-  // tu posición
-  if (me) g += `<g transform="translate(${me[0]},${me[1]})"><circle r="13" fill="none" stroke="#09b1ba" stroke-width="3" class="pulse"/>
-    <g class="pin"><circle r="13" fill="#0f2c36" stroke="#ffc83d" stroke-width="4"/><circle r="4.5" fill="#fff"/>
-    <g transform="translate(0,-34)"><rect x="-44" y="-13" width="88" height="24" rx="12" fill="#0f2c36"/><text y="3.5" text-anchor="middle" class="rb">Día ${day} · aquí</text></g></g></g>`;
+  // meta: caja de zapatillas
+  const ready = T.ready, bx = goal[0], by = goal[1], box = ready ? "#1fa971" : "#ffc83d", lid = ready ? "#168a5c" : "#f0aa12";
+  g += `<g transform="translate(${bx},${by})"><title>${ready ? "Desbloqueado" : "Se abre cuando se cumplan los criterios del índice"}</title>
+    <rect x="-30" y="-6" width="60" height="34" rx="5" fill="${box}" stroke="#fff" stroke-width="3"/>
+    <g transform="${ready ? "translate(4,-12) rotate(-9 -26 -13)" : "translate(0,0)"}"><rect x="-34" y="-17" width="68" height="13" rx="4" fill="${lid}" stroke="#fff" stroke-width="3"/></g>
+    <rect x="-16" y="5" width="32" height="12" rx="3" fill="#fff"/><text y="14.2" text-anchor="middle" style="font:800 8.5px var(--font);fill:#0f2c36;letter-spacing:.06em">SAMBA</text>
+    ${ready ? '<circle cx="26" cy="-14" r="11" fill="#1fa971" stroke="#fff" stroke-width="3"/><path d="M21 -14 L25 -10 L32 -19" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      : '<g transform="translate(26,-12)"><circle r="12" fill="#0f2c36" stroke="#fff" stroke-width="3"/><rect x="-5" y="-1" width="10" height="7.5" rx="1.8" fill="#fff"/><path d="M-3 -1V-3.5a3 3 0 0 1 6 0V-1" fill="none" stroke="#fff" stroke-width="1.8"/></g>'}</g>
+    <text x="${V ? bx - 52 : bx}" y="${V ? by + 6 : by + 52}" text-anchor="${V ? "end" : "middle"}" class="rl">Primer par de Samba</text>
+    <text x="${V ? bx - 52 : bx}" y="${V ? by + 20 : by + 66}" text-anchor="${V ? "end" : "middle"}" class="rs">${ready ? "caja abierta" : "caja cerrada"}</text>`;
 
-  $("roadmap").innerHTML = `<svg class="road" viewBox="0 0 ${W} ${H}" role="img" aria-label="Camino del calendario">${g}</svg>`;
+  // tu posicion: una zapatilla
+  if (me) g += `<g transform="translate(${me[0]},${me[1] - 4})"><ellipse cy="14" rx="20" ry="5" fill="#09b1ba" opacity=".3" class="pulse"/>
+    <g class="pin"><path d="M-19 7V0.5c0-3 1.8-4.5 4.5-4.5H-7c1.3-3.2 3-5.2 6-5.2H3c.6 4 3 6.4 7 7.6l6.2 1.9c2.6.8 3.8 2.5 3.8 5.2V7z" fill="#0f2c36"/>
+      <path d="M-3 -6.5l2.2 2.2M0.5 -6l2.2 2.2M4 -4.6l2.2 2" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="-21" y="6.5" width="42" height="6" rx="3" fill="#fff" stroke="#0f2c36" stroke-width="2.2"/>
+      <rect x="-21" y="9.5" width="42" height="3" fill="#ffc83d" opacity=".9" rx="1.5"/>
+      <g transform="translate(0,-34)"><rect x="-46" y="-13" width="92" height="25" rx="12.5" fill="#0f2c36"/><text y="3.8" text-anchor="middle" class="rb">Día ${day} · aquí</text></g></g></g>`;
+
+  $("roadmap").innerHTML = `<svg class="road" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ruta de zapatillas hasta las Samba">${g}</svg>`;
 }
 
 // ---- Cuenta ----
@@ -608,7 +635,7 @@ function renderTrust() {
       ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div></div>
     ${T.incOpen.length ? `<div class="mini-alert" style="margin-top:12px">Incidencias abiertas: ${T.incOpen.length} (−${T.incPen} puntos). Resuélvelas en la pestaña Incidencias.</div>` : ""}
     <label class="proof"><input type="checkbox" id="proofcb" ${T.proof ? "checked" : ""}> Tengo la prueba de compra de cada par (factura, email o captura del pedido)</label>
-    <div class="hint" style="margin-top:10px"><b style="color:var(--ink)">Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div>
+    <div class="hint" style="margin-top:10px"><b style="color:var(--ink)">Siguiente paso:</b> ${T.parts.every(p => p[2] >= 1) ? (T.ready ? "Todo al máximo: ya puedes subir 1 par de prueba." : "Todo al máximo: solo falta cumplir los criterios de la lista.") : esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div>
     <details ${open?"open":""}><summary>Ver desglose · ${Math.round(T.score)}/100${T.pen?` · −${T.pen}`:""}</summary>
       <div class="brk">${T.parts.map(p=>`<span>${p[0]}</span><span class="hint">${Math.round(p[1]*p[2])}/${p[1]}</span><div class="bar"><i style="width:${p[2]*100}%"></i></div>`).join("")}</div>
       <div class="hint" style="margin-top:6px">Estimación mía, no una puntuación de Vinted.</div></details></div>`;
