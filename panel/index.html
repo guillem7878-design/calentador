@@ -249,13 +249,33 @@
   @keyframes rp { 0% { transform:scale(1); opacity:.75; } 100% { transform:scale(2.8); opacity:0; } }
   .pin { animation:pb 1.3s ease-in-out infinite; }
   @keyframes pb { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+
+  /* ===== incidencias ===== */
+  #incChat { max-height:520px; overflow-y:auto; padding-right:4px; margin-bottom:14px; }
+  .msg.me { flex-direction:row-reverse; }
+  .msg.me .bub { background:var(--navy); color:#fff; border-radius:16px 6px 16px 16px; max-width:85%; white-space:pre-wrap; }
+  #incChat .msg .av { visibility:visible; }
+  #incChat .bub { font-size:13.5px; }
+  .inote { margin-top:8px; padding:8px 10px; border-radius:10px; background:#fff0d6; color:#8a540a; font-size:12.5px; font-weight:550; }
+  .ihd { margin-top:10px; font-weight:750; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--teal2); }
+  ul.mini { margin:4px 0 0 18px; padding:0; } ul.mini li { margin:3px 0; }
+  .incform textarea { width:100%; min-height:92px; padding:12px; border-radius:14px; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; resize:vertical; }
+  .incform textarea:focus { outline:0; border-color:var(--teal); box-shadow:0 0 0 3px rgba(10,165,174,.14); }
+  #incTypes { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .tchip { border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-weight:600; font-size:12.5px; padding:6px 12px; border-radius:10px; cursor:pointer; }
+  .tchip:hover { background:var(--s2); }
+  .tchip.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .ibig { font-size:28px; font-weight:800; letter-spacing:-.04em; }
+  .irow { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .irow:last-child { border-bottom:0; }
+  #nav .nbadge { display:inline-block; min-width:18px; padding:0 5px; margin-left:6px; border-radius:99px; background:var(--coral); color:#fff; font-size:11px; font-weight:800; line-height:18px; }
 </style>
 </head>
 <body>
 <header><div class="wrap">
   <div class="top">
     <h1 id="title">Panel Vinted</h1>
-    <nav id="nav"><button data-t="v-panel" class="on">Panel</button><button data-t="v-arts">Artículos</button><button data-t="v-reg">Registro</button></nav>
+    <nav id="nav"><button data-t="v-panel" class="on">Panel</button><button data-t="v-arts">Artículos</button><button data-t="v-inc">Incidencias<span id="nbadge"></span></button><button data-t="v-reg">Registro</button></nav>
     <span class="pill" id="pill"></span>
   </div>
 </div></header>
@@ -287,6 +307,20 @@
     <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div>
   </section>
 
+  <section id="v-inc" class="view">
+    <div class="main2">
+      <div class="card"><h2>Cuéntame qué te ha pasado</h2>
+        <div id="incChat" class="chat"></div>
+        <div class="incform"><div id="incTypes"></div>
+          <textarea id="incText" placeholder="Por ejemplo: «Me han pedido devolver las zapatillas porque dicen que no son originales» o «Mi anuncio lleva 2 días en revisión»"></textarea>
+          <div class="row" style="margin-top:10px"><button class="btn" id="incSend">Enviar</button><span class="hint">Elige el tipo arriba o déjalo y lo detecto yo.</span></div></div></div>
+      <div>
+        <div class="card"><h2>Efecto en tu índice</h2><div id="incEffect"></div></div>
+        <div class="card"><h2>Incidencias anotadas</h2><div id="incList"></div></div>
+      </div>
+    </div>
+  </section>
+
   <section id="v-reg" class="view">
     <div class="main2">
       <div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
@@ -314,6 +348,7 @@ let stepDone = store.get("vp_steps", {});
 let selDay = null;
 
 // Datos introducidos en el propio panel (se guardan en este navegador) + los de data.js
+D.incidents = store.get("vp_inc", []);
 ["listings","activity","ratings"].forEach(k => {
   D[k] = (D[k] || []).concat(store.get("vp_"+k, []).map(x => ({ ...x, _loc:true })));
 });
@@ -347,7 +382,13 @@ function trust() {
     ["Uso regular (12 días completados)", 15, Math.min(A.length/12,1), "Marca cada día como completado: se registra solo."]
   ];
   const pts = parts.reduce((a,p)=>a+p[1]*p[2],0);
-  const pen = Math.min(30, sum("avisos")*5 + L.filter(x=>x.estado==="revision").length*3 + L.filter(x=>x.estado==="rechazado").length*5);
+  const INCS = D.incidents || [], hayRev = L.some(x => x.estado === "revision");
+  const incOpen = INCS.filter(i => i.estado === "abierta");
+  // el aviso de "anuncio en revision" ya penaliza si el articulo esta marcado en revision: no se cuenta dos veces
+  const incBase = incOpen.reduce((a, i) => a + ((i.tipo === "revision" && hayRev) ? 0 : (i.penal || 0)), 0);
+  const incExtra = INCS.filter(i => daysSince(i.fecha) <= 30).length >= 3 ? 3 : 0;
+  const incPen = incBase + incExtra;
+  const pen = Math.min(40, sum("avisos")*5 + L.filter(x=>x.estado==="revision").length*3 + L.filter(x=>x.estado==="rechazado").length*5 + incPen);
   const score = Math.max(0, pts - pen);
   const checks = [
     ["Más de 21 días de antigüedad (ideal 30)", age >= 21],
@@ -355,9 +396,10 @@ function trust() {
     ["~10 artículos publicados", L.length >= 10],
     ["Sin avisos ni rechazos", sum("avisos")===0 && L.filter(x=>x.estado==="rechazado").length===0],
     ["Prueba de compra guardada de cada par", !!proof],
+    ["Sin incidencias abiertas", incOpen.length === 0],
     ["Índice de confianza ≥ 4", score/20 >= 4]
   ];
-  return { parts, pen, score, checks, ready: checks.every(c=>c[1]), avg, ops, age, proof };
+  return { parts, pen, score, checks, ready: checks.every(c=>c[1]), avg, ops, age, proof, incPen, incExtra, incOpen };
 }
 
 function ring(score) {
@@ -557,6 +599,7 @@ function renderTrust() {
     <div class="trc"><h2 style="margin-bottom:6px">Índice de confianza</h2>
       <div class="ready ${T.ready?"ok":"no"}"><b>${T.ready?" Listo: 1 par de Samba de prueba":" Aún no subas las Samba"}</b>
       ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div></div>
+    ${T.incOpen.length ? `<div class="mini-alert" style="margin-top:12px">Incidencias abiertas: ${T.incOpen.length} (−${T.incPen} puntos). Resuélvelas en la pestaña Incidencias.</div>` : ""}
     <label class="proof"><input type="checkbox" id="proofcb" ${T.proof ? "checked" : ""}> Tengo la prueba de compra de cada par (factura, email o captura del pedido)</label>
     <div class="hint" style="margin-top:10px"><b style="color:var(--ink)">Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div>
     <details ${open?"open":""}><summary>Ver desglose · ${Math.round(T.score)}/100${T.pen?` · −${T.pen}`:""}</summary>
@@ -623,7 +666,7 @@ function delItem(k, i) { const x = D[k][i]; if (!x || !x._loc || !confirm("¿Bor
 
 $("exp").onclick = () => {
   const data = { start: store.get("vp_start", null), days: dayDone, steps: stepDone,
-    listings: store.get("vp_listings", []), activity: store.get("vp_activity", []), ratings: store.get("vp_ratings", []) };
+    listings: store.get("vp_listings", []), activity: store.get("vp_activity", []), ratings: store.get("vp_ratings", []), inc: store.get("vp_inc", []) };
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type:"application/json" }));
   a.download = "copia-panel-vinted-" + todayIso() + ".json"; a.click();
 };
@@ -635,16 +678,164 @@ $("impf").onchange = e => {
     const d = JSON.parse(rd.result);
     store.set("vp_start", d.start ?? null); store.set("vp_days", d.days || {}); store.set("vp_steps", d.steps || {});
     ["listings","activity","ratings"].forEach(k => store.set("vp_"+k, d[k] || []));
+    store.set("vp_inc", d.inc || []);
     location.reload();
   } catch(err) { alert("Archivo no válido"); } };
   rd.readAsText(f);
 };
 
+// ---- Incidencias: asistente con reglas ----
+const INC = {
+  devolucion:{ label:"Devolución", base:5 },
+  revision:{ label:"Anuncio en revisión", base:3 },
+  bloqueo:{ label:"Bloqueo o restricción", base:20 },
+  disputa:{ label:"Paquete o disputa", base:6 },
+  negativa:{ label:"Valoración negativa", base:4 },
+  estafa:{ label:"Mensaje sospechoso", base:0 },
+  pago:{ label:"Pago retenido", base:4 },
+  otro:{ label:"Otra cosa", base:2 }
+};
+const GUIA = {
+  devolucion:{
+    pasos:["Responde dentro de la app en menos de 24 h, con educación y sin discutir.",
+      "Acepta la devolución desde el flujo de Vinted. No pidas que te envíen el paquete por fuera.",
+      "Guarda las fotos del artículo antes de enviarlo y del estado en que te llega de vuelta.",
+      "Cuando se cierre el caso, márcalo aquí como resuelto."],
+    evita:["Discutir o acusar al comprador.","Reembolsar o cobrar fuera de la app.","Borrar el anuncio o el chat."] },
+  revision:{
+    pasos:["Lee el motivo en la notificación o en el email de Vinted.",
+      "Aporta lo que pidan: fotos de la etiqueta y del código de artículo, y la factura o captura del pedido.",
+      "No borres el anuncio ni lo vuelvas a subir.",
+      "Espera 24 a 48 horas. Si pasa más tiempo, escribe a soporte desde la propia revisión.",
+      "No subas más pares hasta que se resuelva."],
+    evita:["Re-subir el mismo anuncio.","Añadir frases como «100 % original» para convencer.","Subir varios pares iguales a la vez."] },
+  bloqueo:{
+    pasos:["Lee el aviso o el email: el motivo exacto y si hay un plazo.",
+      "Escribe a soporte desde el centro de ayuda de Vinted pidiendo que revisen la decisión, y ofrece verificar tu identidad.",
+      "Pausa toda la actividad: no subas ni compres nada hasta tener respuesta.",
+      "Guarda capturas del aviso, de los pedidos pendientes y de los justificantes.",
+      "Atiende desde la app los pedidos o pagos pendientes, si te lo permite."],
+    evita:["Crear otra cuenta para esquivar el bloqueo: incumple las normas y empeora el caso.","Pedir a amigos que vendan por ti.","Contactar a compradores por fuera de la app."] },
+  disputa:{
+    pasos:["Mira el seguimiento del envío para saber dónde está el paquete.",
+      "Responde al comprador con el número de seguimiento y el justificante de envío.",
+      "Atiende el caso desde la app de Vinted, no por mensajes externos.",
+      "Si el transportista lo ha perdido, reclama con tu justificante.",
+      "Guarda el justificante hasta que se cierre."],
+    evita:["Reembolsar por fuera de la app.","Ignorar el mensaje o tardar días en responder."] },
+  negativa:{
+    pasos:["Lee el motivo con calma y sin responder en caliente.",
+      "Responde en público con una frase educada, por ejemplo: «Siento que no haya sido lo que esperabas. He enviado el paquete en 24 horas y el artículo está tal como en las fotos.»",
+      "Si es injusta o falsa, repórtala desde la propia valoración.",
+      "Corrige la causa real (descripción, fotos o plazo de envío).",
+      "Compénsala con más ventas bien hechas: pesa menos con 7 a 10 valoraciones buenas."],
+    evita:["Tomar represalias o valorar mal al comprador.","Contactarlo fuera de la app."] },
+  estafa:{
+    pasos:["No salgas de la app: ni WhatsApp, ni Bizum, ni transferencias, ni enlaces.",
+      "No pulses enlaces ni pagues nada fuera de Vinted.",
+      "Reporta al usuario desde su perfil y guarda una captura.",
+      "Sigue con el flujo normal de la app."],
+    evita:["Dar datos bancarios o códigos.","Enviar el paquete antes de que el pago figure en la app."] },
+  pago:{
+    pasos:["Mira en Vinted Pay el motivo del retraso: suele ser que falta confirmar la recepción.",
+      "Comprueba que el pedido figura como entregado y que el comprador lo confirmó.",
+      "Comprueba que tu cuenta bancaria y tu verificación están a tu nombre.",
+      "Si lleva más tiempo del indicado en la app, escribe a soporte con el número de pedido."],
+    evita:["Pedir al comprador que te pague por fuera.","Abrir varios casos por lo mismo."] },
+  otro:{
+    pasos:["Apunta qué ha pasado, cuándo y con quién, y haz capturas de la app.",
+      "Mantén la conversación dentro de Vinted.",
+      "Si afecta a un pedido o a tu cuenta, escribe a soporte con esas capturas.",
+      "Cuéntamelo con más detalle aquí en el chat con Claude y lo valoramos juntos."],
+    evita:["Actuar en caliente o hacer cambios en la cuenta sin entender el motivo."] }
+};
+let incTipo = "";
+
+function detectTipo(t) {
+  t = t.toLowerCase();
+  if (/bloque|suspend|restring|baneo|cuenta cerrad|desactiv/.test(t)) return "bloqueo";
+  if (/devol|devuelv/.test(t)) return "devolucion";
+  if (/revisi[oó]n|moderaci[oó]n/.test(t)) return "revision";
+  if (/valoraci[oó]n negativa|mala valoraci|1 estrella|una estrella/.test(t)) return "negativa";
+  if (/estafa|enlace|whatsapp|bizum|fuera de la app|transferencia|paypal/.test(t)) return "estafa";
+  if (/retenid|saldo|retir|cobro|pago/.test(t)) return "pago";
+  if (/no (ha )?lleg|disputa|reclam|perdid|paquete/.test(t)) return "disputa";
+  return "otro";
+}
+
+function analyzeInc(tipo, texto) {
+  const t = texto.toLowerCase(), info = INC[tipo], notas = [];
+  let penal = info.base;
+  let grav = penal >= 15 ? "alta" : penal >= 5 ? "media" : "baja";
+  const autent = /falsific|\bfals[oa]s?\b|r[eé]plicas?|\bfakes?\b|imitaci|no (es |son |era |eran |parece |parecen )?originales?|no (los |las )?cree[ns]? (que )?original/.test(t);
+  if (autent) { penal = Math.max(penal, 12); grav = "alta";
+    notas.push("Se menciona la autenticidad. Vinted tiene tolerancia cero con las falsificaciones: si no puedes demostrar que el par es original (factura, email o captura del pedido), retira ese anuncio y no lo vendas."); }
+  if (/amenaz|abogad|denunci|polic[ií]a|fraude/.test(t)) { penal += 4; grav = "alta";
+    notas.push("Hay lenguaje de reclamación seria. Responde solo por la app, con calma, y conserva toda la conversación."); }
+  if (tipo === "devolucion" && !autent && /talla|defecto|da[nñ]ad|roto|mancha|no me (gust|qued)|pequeñ|grande/.test(t)) { penal = Math.min(penal, 3); grav = "baja";
+    notas.push("El motivo parece normal (talla o estado). Pesa poco si lo gestionas bien."); }
+  if (tipo === "bloqueo") notas.push("El panel no puede levantar un bloqueo: eso solo lo decide Vinted. Lo mejor es una respuesta rápida y tranquila a soporte.");
+  if (tipo === "estafa") notas.push("Esto no resta puntos: reportarlo y no salir de la app te protege.");
+  const resuelta = /(ya )?(est[aá]|queda|qued[oó]|fue) (resuelt|solucionad|cerrad)|se (ha )?(resuelt|solucionad)|ya lo (solucion|resolv)/.test(t);
+  if (resuelta) { penal = 0; grav = "baja"; notas.push("Dices que ya está resuelta: la dejo cerrada y sin penalización."); }
+  return { gravedad: grav, penal, notas, resuelta };
+}
+
+function incBubble(i) {
+  const g = GUIA[i.tipo] || GUIA.otro, info = INC[i.tipo] || INC.otro;
+  const col = i.gravedad === "alta" ? "var(--bad)" : i.gravedad === "media" ? "var(--warn)" : "var(--ok)";
+  return `<b>${esc(info.label)}</b> · gravedad <b style="color:${col}">${esc(i.gravedad)}</b><br>
+    Efecto en tu índice: <b>${i.penal ? "−" + i.penal + " puntos (−" + (i.penal/20).toFixed(1) + " sobre 5)" : "ninguno"}</b>${i.estado === "abierta" && i.penal ? " mientras esté abierta" : ""}.
+    ${(i.notas || []).map(n => `<div class="inote">${esc(n)}</div>`).join("")}
+    <div class="ihd">Qué hacer ahora</div><ol class="mini">${g.pasos.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+    <div class="ihd">Qué evitar</div><ul class="mini">${g.evita.map(s => `<li>${esc(s)}</li>`).join("")}</ul>
+    <div class="hint" style="margin-top:8px">${i.estado === "resuelta" ? "Marcada como resuelta." : "Cuando se cierre, márcala como resuelta en la lista."}</div>`;
+}
+
+function renderInc() {
+  const el = $("incChat"); if (!el) return;
+  const list = D.incidents || [];
+  el.innerHTML = `<div class="msg"><div class="av"></div><div class="bub">Cuéntame qué ha pasado: una devolución, un anuncio en revisión, un bloqueo, un paquete que no llega, una valoración mala… Lo valoro, te digo qué hacer y lo anoto.
+    Si queda abierta, <b>resta puntos al índice</b> hasta que la marques como resuelta.
+    <div class="hint" style="margin-top:6px">Soy un asistente con reglas, no una IA completa. Para un caso complicado, cuéntamelo con detalle a Claude en el chat.</div></div></div>` +
+    list.map(i => `<div class="msg me"><div class="bub">${esc(i.texto)}</div></div>
+      <div class="msg"><div class="av"></div><div class="bub">${incBubble(i)}</div></div>`).join("");
+  $("incTypes").innerHTML = Object.entries(INC).map(([k, v]) => `<button class="tchip ${incTipo === k ? "on" : ""}" data-k="${k}">${esc(v.label)}</button>`).join("");
+  $("incTypes").querySelectorAll(".tchip").forEach(b => b.onclick = () => { incTipo = (incTipo === b.dataset.k) ? "" : b.dataset.k; renderInc(); });
+  const T = trust(), open = list.filter(i => i.estado === "abierta");
+  $("incEffect").innerHTML = `<div class="row" style="gap:20px"><div><div class="hint">Incidencias abiertas</div><div class="ibig">${open.length}</div></div>
+    <div><div class="hint">Penalización por incidencias</div><div class="ibig" style="color:${T.incPen ? "var(--warn)" : "var(--ok)"}">−${T.incPen}</div></div>
+    <div><div class="hint">Índice ahora</div><div class="ibig">${(T.score/20).toFixed(1)}/5</div></div></div>
+    <div class="hint" style="margin-top:8px">${open.length ? "Resuelve las abiertas para recuperar esos puntos." : "Sin incidencias abiertas: no hay penalización."}${T.incExtra ? " Incluye +3 por 3 o más incidencias en 30 días." : ""}</div>`;
+  $("incList").innerHTML = list.length ? list.slice().reverse().map(i => { const idx = list.indexOf(i), info = INC[i.tipo] || INC.otro;
+    return `<div class="irow"><div><b>${esc(info.label)}</b> <span class="tag ${i.estado === "abierta" ? "revision" : ""}">${i.estado}</span>
+      <div class="hint">${esc(i.fecha)} · ${i.penal ? "−" + i.penal + " puntos" : "sin penalización"}</div></div>
+      <div class="row" style="gap:6px"><button class="btn ghost sm" onclick="toggleInc(${idx})">${i.estado === "abierta" ? "Marcar resuelta" : "Reabrir"}</button>
+      <button class="btn ghost sm" onclick="delInc(${idx})">Borrar</button></div></div>`; }).join("") : `<div class="empty">Todavía no has anotado ninguna incidencia.</div>`;
+}
+function saveInc() { store.set("vp_inc", D.incidents); }
+function toggleInc(i) { const x = D.incidents[i]; if (!x) return; x.estado = x.estado === "abierta" ? "resuelta" : "abierta";
+  const r = analyzeInc(x.tipo, x.texto); x.penal = x.estado === "abierta" ? (r.resuelta ? INC[x.tipo].base : r.penal) : 0; saveInc(); render(); }
+function delInc(i) { if (!confirm("¿Borrar esta incidencia?")) return; D.incidents.splice(i, 1); saveInc(); render(); }
+function sendInc() {
+  const ta = $("incText"), texto = ta.value.trim();
+  if (!texto) { ta.focus(); return; }
+  const tipo = incTipo || detectTipo(texto), r = analyzeInc(tipo, texto);
+  D.incidents.push({ fecha: todayIso(), tipo, texto, gravedad: r.gravedad, penal: r.penal, notas: r.notas, estado: r.resuelta ? "resuelta" : "abierta" });
+  saveInc(); incTipo = ""; render();
+  const box = $("incChat"); if (box) box.scrollTop = box.scrollHeight;
+  $("incText").value = "";
+}
+
+function renderBadge() {
+  const n = (D.incidents || []).filter(i => i.estado === "abierta").length, b = $("nbadge");
+  if (b) b.innerHTML = n ? `<span class="nbadge">${n}</span>` : "";
+}
 function render() {
   $("title").textContent = D.account.alias;
   const age = daysSince(startDate());
   $("pill").textContent = age == null ? "Sin fecha de alta" : `Día ${age+1} · semana ${Math.min(Math.floor(age/7)+1,5)}`;
-  renderHero(); renderSale(); renderKpis(); renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
+  renderHero(); renderSale(); renderKpis(); renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables(); renderInc(); renderBadge();
 }
 function showTab(id) {
   document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("on", x.dataset.t === id));
@@ -659,6 +850,8 @@ setInterval(checkDay, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) checkDay(); });
 renderForms();
 render();
+$("incSend").onclick = sendInc;
+$("incText").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) sendInc(); });
 let _mob = window.innerWidth < 720;
 window.addEventListener("resize", () => { clearTimeout(window._rz); window._rz = setTimeout(() => { const m = window.innerWidth < 720; if (m !== _mob) { _mob = m; renderRoad(); } }, 200); });
 </script>
