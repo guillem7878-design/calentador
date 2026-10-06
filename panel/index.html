@@ -230,6 +230,25 @@
   .tile.cur { box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--sun); }
   .dd { border-radius:16px; }
   input, select { border-radius:12px !important; }
+
+  /* ===== articulos y roadmap en camino ===== */
+  .forms3 { display:grid; gap:16px; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; }
+  @media (max-width:1000px) { .forms3 { grid-template-columns:1fr; } }
+  .forms3 .card { margin-bottom:16px; }
+  .stars { color:#f5a524; letter-spacing:2px; }
+  .rt { display:flex; gap:12px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line); }
+  .rt:last-child { border-bottom:0; }
+  .stp { display:block; }
+  .rm { padding-bottom:12px; }
+  svg.road { display:block; width:100%; height:auto; overflow:visible; }
+  svg.road .rl { font:700 12.5px var(--font); fill:#0f2c36; paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; }
+  svg.road .rs { font:600 10.5px var(--font); fill:#5f7580; paint-order:stroke; stroke:#fff; stroke-width:3px; }
+  svg.road .rn { font:800 13px var(--font); }
+  svg.road .rb { font:800 11.5px var(--font); fill:#fff; }
+  .pulse { transform-box:fill-box; transform-origin:center; animation:rp 1.9s ease-out infinite; }
+  @keyframes rp { 0% { transform:scale(1); opacity:.75; } 100% { transform:scale(2.8); opacity:0; } }
+  .pin { animation:pb 1.3s ease-in-out infinite; }
+  @keyframes pb { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
 </style>
 </head>
 <body>
@@ -259,22 +278,21 @@
   </section>
 
   <section id="v-arts" class="view">
-    <div class="card"><h2>Añadir artículo</h2><div id="fList"></div></div>
+    <div class="forms3">
+      <div class="card"><h2>Añadir artículo</h2><div id="fList"></div></div>
+      <div class="card"><h2>Registrar venta</h2><div id="fSale"></div></div>
+      <div class="card"><h2>Añadir valoración</h2><div id="fRat"></div></div>
+    </div>
     <div class="card"><h2>Artículos</h2><div class="scroll" id="listings"></div></div>
+    <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div>
   </section>
 
   <section id="v-reg" class="view">
     <div class="main2">
-      <div>
-        <div class="card"><h2>Añadir valoración</h2><div id="fRat"></div></div>
-      </div>
-      <div>
-        <div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
-        <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div>
-        <div class="card"><h2>Copia de seguridad</h2><p class="hint" style="margin-top:0">Tus datos se guardan en este navegador. Descarga una copia de vez en cuando.</p>
-          <div class="row"><button class="btn ghost" id="exp">Descargar copia</button>
-          <button class="btn ghost" id="imp">Restaurar copia</button><input type="file" id="impf" accept=".json" hidden></div></div>
-      </div>
+      <div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
+      <div class="card"><h2>Copia de seguridad</h2><p class="hint" style="margin-top:0">Tus datos se guardan en este navegador. Descarga una copia de vez en cuando.</p>
+        <div class="row"><button class="btn ghost" id="exp">Descargar copia</button>
+        <button class="btn ghost" id="imp">Restaurar copia</button><input type="file" id="impf" accept=".json" hidden></div></div>
     </div>
   </section>
 </main>
@@ -488,22 +506,60 @@ const PHASES = [
 function renderRoad() {
   const age = daysSince(startDate()), cur = age == null ? null : age + 1;
   const total = D.plan.length, done = Object.values(dayDone).filter(Boolean).length;
-  $("roadbar").style.width = (done/total*100) + "%";
   $("roadtxt").textContent = `${done} de ${total} días completados` + (cur ? ` · hoy es el día ${Math.min(cur,total)}` : " · aún sin empezar");
-  const T = trust();
-  let html = PHASES.map((ph, idx) => {
-    const days = D.plan.filter(p => p.d >= ph.from && p.d <= ph.to);
-    const nd = days.filter(p => dayDone[p.d]).length;
-    const isDone = nd === days.length;
-    const isCur = !isDone && cur && cur >= ph.from && cur <= ph.to;
-    const cls = isDone ? "done" : isCur ? "cur" : "todo";
-    return `<div class="s ${cls}" title="${esc(ph.mile)}"><div class="dot">${isDone ? "✓" : idx + 1}</div>
-      <div class="txt"><div class="nm">${esc(ph.name)}</div><div class="rg">días ${ph.from}–${ph.to}${isCur ? " · aquí" : ""}</div></div>
-      <div class="bar"><i style="width:${nd/days.length*100}%"></i></div></div>`;
-  }).join("");
-  html += `<div class="s gate ${T.ready?"ok":""}" title="Se abre cuando se cumplan los criterios del índice de confianza"><div class="dot">${T.ready?"✓":PHASES.length + 1}</div>
-    <div class="txt"><div class="nm">Primer par de Samba</div><div class="rg">${T.ready ? "¡criterios cumplidos!" : "bloqueado"}</div></div><div class="bar"><i style="width:${T.ready?100:0}%"></i></div></div>`;
-  $("roadmap").innerHTML = html;
+  const T = trust(), V = window.innerWidth < 720, ns = "http://www.w3.org/2000/svg";
+  const W = V ? 360 : 1000, H = V ? 860 : 280, n = 7, P = [];
+  for (let i = 0; i <= n; i++) { const t = i / n; P.push(V ? [i % 2 ? 285 : 75, 60 + t * (H - 120)] : [60 + t * (W - 120), i % 2 ? 200 : 85]); }
+  let d = `M ${P[0][0]} ${P[0][1]}`;
+  for (let i = 1; i <= n; i++) { const [x0, y0] = P[i-1], [x1, y1] = P[i];
+    d += V ? ` C ${x0} ${(y0+y1)/2}, ${x1} ${(y0+y1)/2}, ${x1} ${y1}` : ` C ${(x0+x1)/2} ${y0}, ${(x0+x1)/2} ${y1}, ${x1} ${y1}`; }
+  const tmp = document.createElementNS(ns, "svg"), pa = document.createElementNS(ns, "path");
+  pa.setAttribute("d", d); tmp.appendChild(pa); tmp.style.cssText = "position:absolute;visibility:hidden;width:0;height:0"; document.body.appendChild(tmp);
+  const L = pa.getTotalLength(), at = f => { const q = pa.getPointAtLength(Math.max(0, Math.min(1, f)) * L); return [q.x, q.y]; };
+  const fd = dd => (dd - 1) / (total - 1) * 0.93;
+  const day = cur ? Math.min(cur, total) : null;
+  const dayPts = D.plan.map(p => at(fd(p.d))), phPts = PHASES.map(ph => at(fd(ph.from))), goal = at(1), start = at(0), me = day ? at(fd(day)) : null;
+  document.body.removeChild(tmp);
+
+  let g = `<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#09b1ba"/><stop offset="1" stop-color="#7cc8ff"/></linearGradient></defs>`;
+  g += `<circle cx="${V ? 300 : 880}" cy="${V ? 130 : 60}" r="70" fill="#ffc83d" opacity=".16"/><circle cx="${V ? 60 : 130}" cy="${V ? 700 : 230}" r="55" fill="#ff6f59" opacity=".13"/><circle cx="${V ? 310 : 500}" cy="${V ? 480 : 245}" r="40" fill="#09b1ba" opacity=".12"/>`;
+  g += `<path d="${d}" fill="none" stroke="#ebe6da" stroke-width="18" stroke-linecap="round"/>`;
+  if (day) g += `<path d="${d}" fill="none" stroke="url(#rg)" stroke-width="18" stroke-linecap="round" stroke-dasharray="${fd(day) * L} ${L * 2}"/>`;
+  g += `<path d="${d}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="2 13" stroke-linecap="round" opacity=".9"/>`;
+
+  const starts = new Set(PHASES.map(p => p.from));
+  D.plan.forEach((p, i) => {
+    if (starts.has(p.d)) return;
+    const [x, y] = dayPts[i], ok = dayDone[p.d], miss = !ok && cur && p.d < cur;
+    g += `<circle cx="${x}" cy="${y}" r="5.5" fill="${ok ? "#00838d" : miss ? "#ff6f59" : "#fff"}" stroke="${ok || miss ? "#fff" : "#cfc8b8"}" stroke-width="2"><title>Día ${p.d}: ${esc(p.title)}</title></circle>`;
+  });
+
+  PHASES.forEach((ph, i) => {
+    const days = D.plan.filter(p => p.d >= ph.from && p.d <= ph.to), nd = days.filter(p => dayDone[p.d]).length;
+    const isDone = nd === days.length, isCur = !isDone && cur && cur >= ph.from && cur <= ph.to;
+    const [x, y] = phPts[i];
+    const fill = isDone ? "#09b1ba" : isCur ? "#0f2c36" : "#fff", stroke = isDone ? "#fff" : isCur ? "#ffc83d" : "#cfc8b8";
+    g += `<circle cx="${x}" cy="${y}" r="19" fill="${fill}" stroke="${stroke}" stroke-width="4"><title>${esc(ph.mile)}</title></circle>
+      <text x="${x}" y="${y + 4.5}" text-anchor="middle" class="rn" fill="${isDone || isCur ? "#fff" : "#5f7580"}">${isDone ? "✓" : i + 1}</text>`;
+    const up = !V && y < H / 2, lx = V ? (x < W / 2 ? x + 30 : x - 30) : Math.max(70, Math.min(W - 70, x)), an = V ? (x < W / 2 ? "start" : "end") : "middle";
+    const ly = V ? y - 2 : (up ? y - 36 : y + 44);
+    g += `<text x="${lx}" y="${ly}" text-anchor="${an}" class="rl">${esc(ph.name)}</text><text x="${lx}" y="${ly + 14}" text-anchor="${an}" class="rs">días ${ph.from}–${ph.to}</text>`;
+  });
+
+  // salida
+  g += `<g transform="translate(${start[0]},${start[1]})"><circle r="19" fill="#fff" stroke="#0f2c36" stroke-width="4"/><path d="M-5 8V-8M-5 -8H8L4 -3L8 2H-5" fill="#ff6f59" stroke="#0f2c36" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+  // meta
+  const ready = T.ready;
+  g += `<g transform="translate(${goal[0]},${goal[1]})"><circle r="28" fill="${ready ? "#1fa971" : "#ffc83d"}" stroke="#fff" stroke-width="4"/>
+    ${ready ? '<path d="M-9 1L-3 7L10 -7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>' : '<rect x="-9" y="-2" width="18" height="13" rx="3" fill="#0f2c36"/><path d="M-5 -2V-6a5 5 0 0 1 10 0V-2" fill="none" stroke="#0f2c36" stroke-width="3"/>'}</g>
+    <text x="${V ? goal[0] - 40 : goal[0]}" y="${V ? goal[1] + 4 : goal[1] + 50}" text-anchor="${V ? "end" : "middle"}" class="rl">Primer par de Samba</text>
+    <text x="${V ? goal[0] - 40 : goal[0]}" y="${V ? goal[1] + 18 : goal[1] + 64}" text-anchor="${V ? "end" : "middle"}" class="rs">${ready ? "¡desbloqueado!" : "bloqueado"}</text>`;
+  // tu posición
+  if (me) g += `<g transform="translate(${me[0]},${me[1]})"><circle r="13" fill="none" stroke="#09b1ba" stroke-width="3" class="pulse"/>
+    <g class="pin"><circle r="13" fill="#0f2c36" stroke="#ffc83d" stroke-width="4"/><circle r="4.5" fill="#fff"/>
+    <g transform="translate(0,-34)"><rect x="-44" y="-13" width="88" height="24" rx="12" fill="#0f2c36"/><text y="3.5" text-anchor="middle" class="rb">Día ${day} · aquí</text></g></g></g>`;
+
+  $("roadmap").innerHTML = `<svg class="road" viewBox="0 0 ${W} ${H}" role="img" aria-label="Camino del calendario">${g}</svg>`;
 }
 
 // ---- Cuenta ----
@@ -533,7 +589,7 @@ function renderTables() {
   $("activity").innerHTML = D.activity.length ? `<table><tr><th>Fecha</th><th>Min</th><th>Subidos</th><th>Ventas</th><th>Compras</th><th>Valoraciones</th><th>Avisos</th><th>Notas</th></tr>` +
     D.activity.slice().reverse().map(a=>`<tr><td>${esc(a.fecha)}</td><td>${esc(a.minutos)}</td><td>${esc(a.subidos)}</td><td>${esc(a.ventas)}</td><td>${esc(a.compras)}</td><td>${esc(a.valoraciones)}</td><td>${esc(a.avisos)}</td><td>${esc(a.notas)}</td></tr>`).join("") + `</table>`
     : `<div class="empty">Sin registros todavía.</div>`;
-  $("ratings").innerHTML = D.ratings.length ? D.ratings.map(r=>`<div>${"★".repeat(r.estrellas)}${"☆".repeat(5-r.estrellas)} <span class="hint">${esc(r.fecha)} ${esc(r.comentario)}</span></div>`).join("") : `<div class="empty">Sin valoraciones todavía.</div>`;
+  $("ratings").innerHTML = D.ratings.length ? D.ratings.map(r => `<div class="rt"><span class="stars">${"★".repeat(r.estrellas)}${"☆".repeat(5-r.estrellas)}</span><span>${esc(r.comentario)}</span><span class="hint" style="margin-left:auto">${esc(r.fecha)}</span></div>`).join("") : `<div class="empty">Sin valoraciones todavía.</div>`;
 }
 
 // ---- formularios y edición ----
@@ -551,6 +607,21 @@ function renderForms() {
     if (!$("l_art").value.trim()) { alert("Pon al menos el nombre del artículo"); return; }
     addItem("listings", { fecha:todayIso(), articulo:$("l_art").value, modelo:$("l_mod").value, coste:num($("l_cos").value), precio:num($("l_pre").value), estado:$("l_est").value, prueba:$("l_pru").value, notas:$("l_not").value });
     renderForms(); render(); };
+}
+function renderSale() {
+  const el = $("fSale"); if (!el) return;
+  const opts = D.listings.map((x, i) => ({ x, i })).filter(o => o.x._loc && o.x.estado !== "vendido");
+  if (!opts.length) { el.innerHTML = '<div class="empty">No tienes artículos pendientes de vender. Añade uno primero.</div>'; return; }
+  el.innerHTML = `<div style="${gridF}"><label class="hint" style="grid-column:1/-1">Artículo<select id="s_art" ${inp}>${opts.map(o => `<option value="${o.i}">${esc(o.x.articulo)}${o.x.modelo ? " · " + esc(o.x.modelo) : ""}</option>`).join("")}</select></label>
+    ${fld("s_pre","Precio de venta €","number","step=0.01 min=0")}${fld("s_com","Comisión y envío €","number","step=0.01 min=0")}
+    <label class="hint">Valoración recibida<select id="s_est" ${inp}><option value="">Sin valoración</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>${fld("s_cm","Comentario")}</div>
+    <button class="btn" id="s_ok">Registrar venta</button>`;
+  $("s_ok").onclick = () => {
+    const x = D.listings[+$("s_art").value]; if (!x) return;
+    x.estado = "vendido"; x.precioVenta = num($("s_pre").value) || x.precio || 0; x.comisionEnvio = num($("s_com").value);
+    saveLoc("listings");
+    if ($("s_est").value) addItem("ratings", { fecha: todayIso(), estrellas: +$("s_est").value, comentario: $("s_cm").value || ("Venta: " + x.articulo) });
+    render(); };
 }
 function setEstado(i, v) {
   const x = D.listings[i]; if (!x || !x._loc) return;
@@ -584,7 +655,7 @@ function render() {
   $("title").textContent = D.account.alias;
   const age = daysSince(startDate());
   $("pill").textContent = age == null ? "Sin fecha de alta" : `Día ${age+1} · semana ${Math.min(Math.floor(age/7)+1,5)}`;
-  renderHero(); renderKpis(); renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
+  renderHero(); renderSale(); renderKpis(); renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
 }
 function showTab(id) {
   document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("on", x.dataset.t === id));
@@ -599,6 +670,8 @@ setInterval(checkDay, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) checkDay(); });
 renderForms();
 render();
+let _mob = window.innerWidth < 720;
+window.addEventListener("resize", () => { clearTimeout(window._rz); window._rz = setTimeout(() => { const m = window.innerWidth < 720; if (m !== _mob) { _mob = m; renderRoad(); } }, 200); });
 </script>
 </body>
 </html>
