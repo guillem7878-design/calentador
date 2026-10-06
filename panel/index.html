@@ -143,6 +143,80 @@
   input, select { transition:border-color .12s; }
   input:focus, select:focus { outline:0; border-color:var(--ink) !important; }
   input, select { border-radius:7px !important; }
+
+  /* ===== paleta Vinted ===== */
+  :root {
+    color-scheme:light;
+    --bg:#f3f6f6; --s1:#ffffff; --s2:#eaf2f2; --card:#ffffff; --card2:#eaf2f2;
+    --line:#dce5e6; --ink:#16282a; --mut:#62777a;
+    --acc:#09b1ba; --acc2:#007782; --accbg:#e1f5f6; --accglow:transparent;
+    --ok:#2a9d6a; --warn:#d9822b; --warnbg:#fdf2e3; --bad:#d64545; --badbg:#fdeaea;
+  }
+  html, body { background:var(--bg); color:var(--ink); }
+  .card, .kpis { box-shadow:0 1px 2px rgba(22,40,42,.05); }
+
+  header { background:var(--acc2); border-bottom:0; }
+  h1 { color:#fff; font-size:15px; }
+  #nav button { color:rgba(255,255,255,.72); }
+  #nav button:hover { color:#fff; }
+  #nav button.on { color:#fff; border-bottom-color:#fff; }
+  .pill { color:#fff; background:rgba(255,255,255,.16); padding:4px 12px; border-radius:99px; font-size:12px; font-weight:500; }
+  main.wrap { padding-top:22px; }
+
+  button.btn { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button.btn:hover { background:var(--acc2); border-color:var(--acc2); opacity:1; }
+  button.btn.ghost { background:#fff; color:var(--acc2); border-color:var(--line); }
+  button.btn.ghost:hover { background:var(--accbg); border-color:var(--acc); }
+  .bar { background:#dfeaea; } .bar i { background:var(--acc); }
+
+  .kpis { background:var(--line); }
+  .kpi:first-child { background:var(--accbg); }
+  .kpi .v { color:var(--acc2); }
+  .kpi .k { color:var(--mut); }
+
+  .rm { border-top:3px solid var(--acc); }
+  .s { background:#fff; opacity:.7; }
+  .s.done { background:var(--accbg); border-color:transparent; }
+  .s.done .dot { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .s.cur { background:#fff; border-color:var(--acc); box-shadow:0 0 0 3px rgba(9,177,186,.15); }
+  .s.cur .dot { border-color:var(--acc); color:var(--acc2); background:var(--accbg); font-weight:600; }
+  .s.gate.ok { background:#e5f5ec; } .s.gate.ok .dot { background:var(--ok); border-color:var(--ok); color:#fff; }
+
+  .today { border-top:3px solid var(--acc); }
+  .av { background:var(--acc); width:8px; height:8px; }
+  .bub { background:var(--accbg); color:var(--ink); }
+  .bub.warn { background:var(--warnbg); border:1px solid #f1d5a9; color:#9a5a14; }
+  .bub.ok { background:#e5f5ec; border:1px solid #bfe3cf; color:#1d7a50; }
+  .steps li { background:#fff; border-color:var(--line); }
+  .steps li:hover { background:var(--accbg); border-color:#bfe6e8; }
+  .steps li.done { background:#f1f8f8; }
+  .chk { border-color:#9db5b7; background:#fff; }
+  .done .chk { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .dont { border-left-color:var(--warn); color:#8a6a43; }
+  .timer { color:var(--acc2); }
+
+  .tr .trh svg text { fill:var(--ink); }
+  .ready.ok b { color:var(--ok); }
+  details summary { color:var(--acc2); font-weight:500; }
+  details[open] summary { color:var(--acc2); }
+
+  .tile { background:#fff; color:var(--mut); }
+  .tile:hover { background:var(--accbg); }
+  .tile.done { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .tile.miss { background:var(--warnbg); border-color:#efcf9f; color:var(--warn); }
+  .tile.cur { background:#fff; border:2px solid var(--acc2); color:var(--acc2); font-weight:600; }
+  .tile.sel { box-shadow:0 0 0 2px rgba(9,177,186,.35); }
+  .legend .lg:nth-child(1) { }
+  .dd { border-top-color:var(--line); }
+
+  th { color:var(--mut); } td, th { border-bottom-color:var(--line); }
+  .tag { padding:2px 9px; border-radius:99px; background:#e5f5ec; color:var(--ok); font-weight:500; }
+  .tag.revision { background:var(--warnbg); color:var(--warn); } .tag.rechazado { background:var(--badbg); color:var(--bad); }
+  input, select { background:#fff !important; color:var(--ink) !important; border-color:var(--line) !important; }
+  input:focus, select:focus { border-color:var(--acc) !important; box-shadow:0 0 0 3px rgba(9,177,186,.15); }
+  h2 { color:var(--acc2); font-weight:600; }
+  h2[style*="font-size"] { color:var(--ink); }
+  a { color:var(--acc2); }
 </style>
 </head>
 <body>
