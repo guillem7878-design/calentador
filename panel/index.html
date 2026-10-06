@@ -127,9 +127,15 @@
     <div class="legend"><span>🟩 hecho</span><span>🟧 sin completar</span><span>◻ pendiente</span><span>⬜ con borde = hoy</span></div></div>
     <div class="card" id="dayDetail"></div></section>
   <section id="cuenta"><div id="trust"></div></section>
-  <section id="arts"><div class="card"><h2>Artículos</h2><div class="scroll" id="listings"></div></div></section>
-  <section id="reg"><div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
-    <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div></section>
+  <section id="arts"><div class="card"><h2>Añadir artículo</h2><div id="fList"></div></div>
+    <div class="card"><h2>Artículos</h2><div class="scroll" id="listings"></div></div></section>
+  <section id="reg"><div class="card"><h2>Registrar el día</h2><div id="fAct"></div></div>
+    <div class="card"><h2>Actividad diaria</h2><div class="scroll" id="activity"></div></div>
+    <div class="card"><h2>Añadir valoración</h2><div id="fRat"></div></div>
+    <div class="card"><h2>Valoraciones</h2><div id="ratings"></div></div>
+    <div class="card"><h2>Copia de seguridad</h2><p class="hint" style="margin-top:0">Tus datos se guardan en este navegador. Descarga una copia de vez en cuando.</p>
+      <div class="row"><button class="btn ghost" id="exp">Descargar copia</button>
+      <button class="btn ghost" id="imp">Restaurar copia</button><input type="file" id="impf" accept=".json" hidden></div></div></section>
 </main>
 
 <script src="data.js"></script>
@@ -147,6 +153,14 @@ const store = {
 let dayDone = store.get("vp_days", {});
 let stepDone = store.get("vp_steps", {});
 let selDay = null, timer = { run:false, left:0, id:null };
+
+// Datos introducidos en el propio panel (se guardan en este navegador) + los de data.js
+["listings","activity","ratings"].forEach(k => {
+  D[k] = (D[k] || []).concat(store.get("vp_"+k, []).map(x => ({ ...x, _loc:true })));
+});
+const saveLoc = k => store.set("vp_"+k, D[k].filter(x => x._loc).map(({_loc, ...r}) => r));
+function addItem(k, item) { D[k].push({ ...item, _loc:true }); saveLoc(k); }
+const num = v => (v === "" || v == null) ? 0 : Number(v);
 
 const startDate = () => D.account.createdAt || store.get("vp_start", null);
 function daysSince(d) {
@@ -207,11 +221,13 @@ function renderToday() {
     <div class="kpi"><div class="k">Valoraciones</div><div class="v">${D.ratings.length}</div></div></div>`;
 
   if (cur == null) {
-    html += `<div class="card"><h2>Aún no has empezado</h2><p class="hint">Cuando crees la cuenta, pulsa el botón. Ese será tu día 1.</p><button class="btn" id="start">Empezar hoy (día 1)</button></div>`;
+    html += `<div class="card hero"><h2>Aún no has empezado</h2><p class="hint">Cuando hayas creado la cuenta de Vinted, pulsa el botón. Hoy será tu día 1 y el panel contará los días solo.</p><button class="btn" id="start">✅ He creado la cuenta</button></div>`;
   } else if (cur > plan.length) {
     html += `<div class="card"><h2>Plan completado</h2><p class="hint">Llevas ${cur-1} días. Revisa la pestaña Cuenta para ver si ya estás listo para las Samba.</p></div>`;
   } else {
     const p = plan[cur-1], sd = stepDone[cur] || [];
+    const missed = plan.filter(x => x.d < cur && !dayDone[x.d]).map(x => x.d);
+    if (missed.length) html += `<div class="dont" style="margin:0 0 14px">⏳ Tienes ${missed.length} día${missed.length>1?"s":""} sin completar (día${missed.length>1?"s":""} ${missed.join(", ")}). No pasa nada: haz hoy lo de hoy y, si puedes, marca los que sí hiciste en el Plan. El índice solo refleja lo que registres.</div>`;
     const ndone = p.steps.filter((_,i)=>sd[i]).length;
     html += `<div class="card hero"><div class="hint">DÍA ${cur} DE ${plan.length} · ${p.min} MIN</div>
       <h2 style="font-size:20px;margin:2px 0 8px">${esc(p.title)}</h2>
@@ -225,7 +241,14 @@ function renderToday() {
       </div>
       <p class="hint" style="margin-bottom:0">Al terminar dime «completado» y qué ha pasado (minutos, mensajes, ventas, avisos) y actualizo el índice.</p></div>`;
   }
+  if (cur != null) html += `<p class="hint" style="text-align:center">Alta: ${esc(s)} · <a href="#" id="rst" style="color:var(--mut)">cambiar fecha de alta</a></p>`;
   $("today").innerHTML = html;
+  const rs = $("rst"); if (rs) rs.onclick = e => { e.preventDefault();
+    const v = prompt("Fecha de alta (AAAA-MM-DD). Déjalo vacío para empezar de cero:", s);
+    if (v === null) return;
+    if (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) { alert("Formato no válido"); return; }
+    if (!v) { store.set("vp_start", null); } else { store.set("vp_start", v); }
+    render(); };
   const st = $("start"); if (st) st.onclick = () => { store.set("vp_start", todayIso()); render(); };
   document.querySelectorAll(".steps li").forEach(li => li.onclick = () => {
     const a = stepDone[cur] || []; a[li.dataset.s] = !a[li.dataset.s]; stepDone[cur] = a; store.set("vp_steps", stepDone); render();
@@ -311,16 +334,70 @@ function renderTrust() {
 // ---- Tablas ----
 function renderTables() {
   const L = D.listings;
-  $("listings").innerHTML = L.length ? `<table><tr><th>Fecha</th><th>Artículo</th><th>Modelo/talla</th><th>Coste</th><th>Precio</th><th>Estado</th><th>Prueba</th><th>Venta</th><th>Margen</th><th>Notas</th></tr>` +
-    L.map(x=>{ const m = x.estado==="vendido" ? (x.precioVenta||0)-(x.coste||0)-(x.comisionEnvio||0) : null;
+  $("listings").innerHTML = L.length ? `<table><tr><th>Fecha</th><th>Artículo</th><th>Modelo/talla</th><th>Coste</th><th>Precio</th><th>Estado</th><th>Prueba</th><th>Venta</th><th>Margen</th><th>Notas</th><th></th></tr>` +
+    L.map((x,i)=>{ const m = x.estado==="vendido" ? (x.precioVenta||0)-(x.coste||0)-(x.comisionEnvio||0) : null;
+      const est = x._loc ? `<select onchange="setEstado(${i},this.value)" style="background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:3px">${["activo","revision","vendido","rechazado"].map(o=>`<option ${o===x.estado?"selected":""}>${o}</option>`).join("")}</select>`
+        : `<span class="tag ${esc(x.estado)}">${esc(x.estado)}</span>`;
       return `<tr><td>${esc(x.fecha)}</td><td>${esc(x.articulo)}</td><td>${esc(x.modelo)}</td><td>${eur(x.coste)}</td><td>${eur(x.precio)}</td>
-      <td><span class="tag ${esc(x.estado)}">${esc(x.estado)}</span>${x.motivo?" · "+esc(x.motivo):""}</td><td>${esc(x.prueba)}</td><td>${eur(x.precioVenta)}</td><td>${m==null?"–":eur(m)}</td><td>${esc(x.notas)}</td></tr>`; }).join("") + `</table>`
-    : `<div class="empty">Aún no hay artículos. Cuéntame cuando subas uno y lo anoto.</div>`;
+      <td>${est}${x.motivo?" · "+esc(x.motivo):""}</td><td>${esc(x.prueba)}</td><td>${eur(x.precioVenta)}</td><td>${m==null?"–":eur(m)}</td><td>${esc(x.notas)}</td><td>${x._loc?`<a href="#" onclick="delItem('listings',${i});return false" style="color:var(--bad)">✕</a>`:""}</td></tr>`; }).join("") + `</table>`
+    : `<div class="empty">Aún no hay artículos. Añade el primero con el formulario de arriba.</div>`;
   $("activity").innerHTML = D.activity.length ? `<table><tr><th>Fecha</th><th>Min</th><th>Subidos</th><th>Ventas</th><th>Compras</th><th>Valoraciones</th><th>Avisos</th><th>Notas</th></tr>` +
     D.activity.slice().reverse().map(a=>`<tr><td>${esc(a.fecha)}</td><td>${esc(a.minutos)}</td><td>${esc(a.subidos)}</td><td>${esc(a.ventas)}</td><td>${esc(a.compras)}</td><td>${esc(a.valoraciones)}</td><td>${esc(a.avisos)}</td><td>${esc(a.notas)}</td></tr>`).join("") + `</table>`
     : `<div class="empty">Sin registros todavía.</div>`;
   $("ratings").innerHTML = D.ratings.length ? D.ratings.map(r=>`<div>${"★".repeat(r.estrellas)}${"☆".repeat(5-r.estrellas)} <span class="hint">${esc(r.fecha)} ${esc(r.comentario)}</span></div>`).join("") : `<div class="empty">Sin valoraciones todavía.</div>`;
 }
+
+// ---- formularios y edición ----
+const inp = "style=\"width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit\"";
+const fld = (id, label, type="text", extra="") => `<label class="hint" style="display:block">${label}<input id="${id}" type="${type}" ${extra} ${inp}></label>`;
+const gridF = "display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:12px";
+
+function renderForms() {
+  $("fAct").innerHTML = `<div style="${gridF}">${fld("a_min","Minutos","number","min=0")}${fld("a_sub","Artículos subidos","number","min=0")}${fld("a_ven","Ventas","number","min=0")}
+    ${fld("a_com","Compras","number","min=0")}${fld("a_ava","Avisos o revisiones","number","min=0")}</div>${fld("a_not","Notas")}
+    <div class="hint" style="margin:6px 0 12px">Se guarda con la fecha de hoy. Si registras otra vez hoy, se sustituye.</div><button class="btn" id="a_ok">Guardar el día</button>`;
+  $("fRat").innerHTML = `<div style="${gridF}"><label class="hint">Estrellas<select id="r_est" ${inp}><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>${fld("r_com","Comentario")}</div><button class="btn" id="r_ok">Añadir valoración</button>`;
+  $("fList").innerHTML = `<div style="${gridF}">${fld("l_art","Artículo (p. ej. Samba OG)")}${fld("l_mod","Modelo / talla")}${fld("l_cos","Coste €","number","step=0.01 min=0")}${fld("l_pre","Precio publicado €","number","step=0.01 min=0")}
+    <label class="hint">Estado<select id="l_est" ${inp}><option>activo</option><option>revision</option><option>vendido</option><option>rechazado</option></select></label>${fld("l_pru","Prueba de compra (p. ej. captura pedido)")}</div>${fld("l_not","Notas")}
+    <div style="height:12px"></div><button class="btn" id="l_ok">Añadir artículo</button>`;
+  $("a_ok").onclick = () => {
+    const f = todayIso();
+    D.activity = D.activity.filter(x => !(x._loc && x.fecha === f));
+    addItem("activity", { fecha:f, minutos:num($("a_min").value), subidos:num($("a_sub").value), ventas:num($("a_ven").value), compras:num($("a_com").value), valoraciones:0, avisos:num($("a_ava").value), notas:$("a_not").value });
+    renderForms(); render(); };
+  $("r_ok").onclick = () => { addItem("ratings", { fecha:todayIso(), estrellas:+$("r_est").value, comentario:$("r_com").value }); renderForms(); render(); };
+  $("l_ok").onclick = () => {
+    if (!$("l_art").value.trim()) { alert("Pon al menos el nombre del artículo"); return; }
+    addItem("listings", { fecha:todayIso(), articulo:$("l_art").value, modelo:$("l_mod").value, coste:num($("l_cos").value), precio:num($("l_pre").value), estado:$("l_est").value, prueba:$("l_pru").value, notas:$("l_not").value });
+    renderForms(); render(); };
+}
+function setEstado(i, v) {
+  const x = D.listings[i]; if (!x || !x._loc) return;
+  x.estado = v;
+  if (v === "vendido") { x.precioVenta = num(prompt("Precio de venta €", x.precio ?? "")); x.comisionEnvio = num(prompt("Comisión y envío €", "0")); }
+  if (v === "revision" || v === "rechazado") { x.motivo = prompt("Motivo (opcional)", x.motivo || "") || ""; }
+  saveLoc("listings"); render();
+}
+function delItem(k, i) { const x = D[k][i]; if (!x || !x._loc || !confirm("¿Borrar?")) return; D[k].splice(i, 1); saveLoc(k); render(); }
+
+$("exp").onclick = () => {
+  const data = { start: store.get("vp_start", null), days: dayDone, steps: stepDone,
+    listings: store.get("vp_listings", []), activity: store.get("vp_activity", []), ratings: store.get("vp_ratings", []) };
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type:"application/json" }));
+  a.download = "copia-panel-vinted-" + todayIso() + ".json"; a.click();
+};
+$("imp").onclick = () => $("impf").click();
+$("impf").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { try {
+    const d = JSON.parse(rd.result);
+    store.set("vp_start", d.start ?? null); store.set("vp_days", d.days || {}); store.set("vp_steps", d.steps || {});
+    ["listings","activity","ratings"].forEach(k => store.set("vp_"+k, d[k] || []));
+    location.reload();
+  } catch(err) { alert("Archivo no válido"); } };
+  rd.readAsText(f);
+};
 
 function render() {
   $("title").textContent = D.account.alias;
@@ -328,11 +405,17 @@ function render() {
   $("pill").textContent = age == null ? "Sin fecha de alta" : `Día ${age+1} · semana ${Math.min(Math.floor(age/7)+1,5)}`;
   renderToday(); renderRoad(); renderPlan(); renderTrust(); renderTables();
 }
+// El panel se entera solo cuando cambia el día (medianoche) o al volver a la pestaña
+let lastDay = todayIso();
+const checkDay = () => { if (todayIso() !== lastDay) { lastDay = todayIso(); selDay = null; render(); } };
+setInterval(checkDay, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkDay(); });
 $("nav").onclick = e => {
   const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
   document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === b.dataset.t));
 };
+renderForms();
 render();
 </script>
 </body>
