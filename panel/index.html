@@ -236,6 +236,9 @@
   @media (max-width:1000px) { .forms3 { grid-template-columns:1fr; } }
   .forms3 .card { margin-bottom:16px; }
   .stars { color:#f5a524; letter-spacing:2px; }
+  .suma { display:inline-block; margin-top:6px; padding:3px 10px; border-radius:8px; background:#fff; font-size:12px; font-weight:650; color:var(--teal2); }
+  label.proof { display:flex; gap:10px; align-items:flex-start; margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--s2); font-size:12.5px; font-weight:600; cursor:pointer; }
+  label.proof input { width:auto !important; margin-top:2px; accent-color:var(--teal); }
   .rt { display:flex; gap:12px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line); }
   .rt:last-child { border-bottom:0; }
   .stp { display:block; }
@@ -337,15 +340,14 @@ function trust() {
   const ops = sum("ventas") + sum("compras") + L.filter(x => x.estado === "vendido").length;
   const avg = R.length ? R.reduce((a,r)=>a+r.estrellas,0)/R.length : 0;
   const prof = D.plan.slice(0,4).filter(p=>dayDone[p.d]).length / 4;
-  const conPrueba = L.length ? L.filter(x=>x.prueba).length / L.length : 0;
+  const proof = store.get("vp_proof", false);
   const parts = [
     ["Perfil completo y verificado (días 1-4)", 15, prof, "Completa los días 1 a 4 del plan."],
     ["Antigüedad (mín. 21 días, ideal 30)", 25, Math.min(age/30,1), "Solo el tiempo: el factor que más pesa y no se acelera."],
-    ["Artículos publicados (~10)", 10, Math.min(L.length/10,1), "Sube artículos reales al ritmo del plan."],
-    ["Operaciones reales (4)", 15, Math.min(ops/4,1), "Haz una compra o venta real que necesites."],
-    ["Valoraciones (~7, media ≥4)", 15, Math.min(R.length/7,1) * (avg && avg<4 ? .5 : 1), "Envía rápido y pide la valoración con educación."],
-    ["Uso regular (~12 días registrados)", 10, Math.min(A.length/12,1), "Cuéntame cada día lo que haces."],
-    ["Artículos con prueba de compra", 10, conPrueba, "Anota la prueba de compra de cada par."]
+    ["Artículos publicados (10)", 10, Math.min(L.length/10,1), "Sube un artículo real al ritmo del plan y apúntalo en Artículos."],
+    ["Operaciones reales (4: compras y ventas)", 15, Math.min(ops/4,1), "Haz una compra real que necesites o cierra una venta."],
+    ["Valoraciones (7, media ≥4)", 20, Math.min(R.length/7,1) * (avg && avg<4 ? .5 : 1), "Envía en 48 h y pide la valoración con educación tras cada entrega."],
+    ["Uso regular (12 días completados)", 15, Math.min(A.length/12,1), "Marca cada día como completado: se registra solo."]
   ];
   const pts = parts.reduce((a,p)=>a+p[1]*p[2],0);
   const pen = Math.min(30, sum("avisos")*5 + L.filter(x=>x.estado==="revision").length*3 + L.filter(x=>x.estado==="rechazado").length*5);
@@ -355,9 +357,10 @@ function trust() {
     ["~7 valoraciones con media ≥4", R.length >= 7 && avg >= 4],
     ["~10 artículos publicados", L.length >= 10],
     ["Sin avisos ni rechazos", sum("avisos")===0 && L.filter(x=>x.estado==="rechazado").length===0],
-    ["Índice de confianza ≥ 3,5", score/20 >= 3.5]
+    ["Prueba de compra guardada de cada par", !!proof],
+    ["Índice de confianza ≥ 4", score/20 >= 4]
   ];
-  return { parts, pen, score, checks, ready: checks.every(c=>c[1]), avg, ops, age };
+  return { parts, pen, score, checks, ready: checks.every(c=>c[1]), avg, ops, age, proof };
 }
 
 function ring(score) {
@@ -424,7 +427,7 @@ function renderToday() {
         <div class="tmr"><span class="timer" id="tm">${fmt(timer.left||p.min*60)}</span><button class="btn ghost sm" id="tgl">${timer.run?"Pausar":"Iniciar"}</button></div></div>
       <div class="bar" style="margin:12px 0 12px"><i style="width:${ndone/p.steps.length*100}%"></i></div>
       <div class="chat">
-        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. Te llevará unos <b>${p.min} minutos</b>.</div></div>
+        <div class="msg"><div class="av"></div><div class="bub">${greeting()} Hoy es el <b>día ${cur} de ${plan.length}</b>: <b>${esc(p.title)}</b>. Te llevará unos <b>${p.min} minutos</b>.<br><span class="suma">Hoy suma a tu índice: ${esc(p.suma || "uso regular")}</span></div></div>
         ${missed.length ? `<div class="msg"><div class="av"></div><div class="bub warn"> Te quedan ${missed.length} día${missed.length>1?"s":""} sin completar (${missed.join(", ")}). No pasa nada: haz lo de hoy y sigue a tu ritmo.</div></div>` : ""}
         <div class="msg"><div class="av"></div><div class="bub">Esto es lo que toca hoy (${ndone}/${p.steps.length}):
           <ul class="steps">${p.steps.map((st,i)=>`<li class="${sd[i]?"done":""}" data-s="${i}"><span class="chk">✓</span><span class="tx">${esc(st)}</span></li>`).join("")}</ul></div></div>
@@ -570,10 +573,12 @@ function renderTrust() {
     <div class="trc"><h2 style="margin-bottom:6px">Índice de confianza</h2>
       <div class="ready ${T.ready?"ok":"no"}"><b>${T.ready?" Listo: 1 par de Samba de prueba":" Aún no subas las Samba"}</b>
       ${T.checks.map(c=>`<div class="hint">${c[1]?"✔":"○"} ${c[0]}</div>`).join("")}</div></div></div>
+    <label class="proof"><input type="checkbox" id="proofcb" ${T.proof ? "checked" : ""}> Tengo la prueba de compra de cada par (factura, email o captura del pedido)</label>
     <div class="hint" style="margin-top:10px"><b style="color:var(--ink)">Siguiente paso:</b> ${esc(T.parts.slice().sort((a,b)=>a[2]-b[2])[0][3])}</div>
     <details ${open?"open":""}><summary>Ver desglose · ${Math.round(T.score)}/100${T.pen?` · −${T.pen}`:""}</summary>
       <div class="brk">${T.parts.map(p=>`<span>${p[0]}</span><span class="hint">${Math.round(p[1]*p[2])}/${p[1]}</span><div class="bar"><i style="width:${p[2]*100}%"></i></div>`).join("")}</div>
       <div class="hint" style="margin-top:6px">Estimación mía, no una puntuación de Vinted.</div></details></div>`;
+  const pc = $("proofcb"); if (pc) pc.onchange = () => { store.set("vp_proof", pc.checked); render(); };
 }
 
 // ---- Tablas ----
